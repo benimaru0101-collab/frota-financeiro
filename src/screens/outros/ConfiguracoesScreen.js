@@ -1,12 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, Switch, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Switch, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Screen, Card, Title, PrimaryButton } from '../../components/UI';
 import { colors, spacing } from '../../theme/colors';
 
+const STORAGE_KEY = '@frota_financeiro/preferencias_v1';
+
+const PADRAO = {
+  notificacoes: true,
+  alertasManutencao: true,
+  modoEscuro: true,
+};
+
 export default function ConfiguracoesScreen() {
-  const [notificacoes, setNotificacoes] = useState(true);
-  const [alertasManutencao, setAlertasManutencao] = useState(true);
-  const [modoEscuro, setModoEscuro] = useState(true);
+  const [notificacoes, setNotificacoes] = useState(PADRAO.notificacoes);
+  const [alertasManutencao, setAlertasManutencao] = useState(PADRAO.alertasManutencao);
+  const [modoEscuro, setModoEscuro] = useState(PADRAO.modoEscuro);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const salvo = await AsyncStorage.getItem(STORAGE_KEY);
+        if (salvo) {
+          const prefs = JSON.parse(salvo);
+          setNotificacoes(prefs.notificacoes ?? PADRAO.notificacoes);
+          setAlertasManutencao(prefs.alertasManutencao ?? PADRAO.alertasManutencao);
+          setModoEscuro(prefs.modoEscuro ?? PADRAO.modoEscuro);
+        }
+      } catch (erro) {
+        console.warn('Não foi possível carregar as preferências:', erro);
+      } finally {
+        setCarregando(false);
+      }
+    })();
+  }, []);
+
+  async function handleSalvar() {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ notificacoes, alertasManutencao, modoEscuro })
+      );
+      Alert.alert('Preferências salvas');
+    } catch (erro) {
+      Alert.alert('Não foi possível salvar as preferências', String(erro));
+    }
+  }
 
   return (
     <Screen>
@@ -24,7 +64,12 @@ export default function ConfiguracoesScreen() {
         <Text style={styles.info}>Idioma: Português (BR)</Text>
       </View>
 
-      <PrimaryButton title="Salvar Alterações" onPress={() => {}} style={{ marginTop: spacing.xl }} />
+      <PrimaryButton
+        title="Salvar Alterações"
+        onPress={handleSalvar}
+        disabled={carregando}
+        style={{ marginTop: spacing.xl }}
+      />
     </Screen>
   );
 }

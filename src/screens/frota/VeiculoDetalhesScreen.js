@@ -35,7 +35,7 @@ export default function VeiculoDetalhesScreen({ route, navigation }) {
       <SecondaryButton title="Viagens" onPress={() => navigation.navigate('Viagens')} style={{ marginBottom: spacing.sm }} />
       <SecondaryButton title="Manutenções" onPress={() => navigation.navigate('Manutencoes')} style={{ marginBottom: spacing.sm }} />
       <SecondaryButton title="Documentos" onPress={() => navigation.navigate('Documentos')} style={{ marginBottom: spacing.sm }} />
-      <SecondaryButton title="Editar" onPress={() => {}} />
+      <SecondaryButton title="Editar" onPress={() => navigation.navigate('EditarVeiculo', { veiculo })} />
     </Screen>
   );
 }

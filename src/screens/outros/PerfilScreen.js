@@ -20,8 +20,8 @@ export default function PerfilScreen({ navigation }) {
       </View>
 
       <Card style={{ marginTop: spacing.xl }}>
-        <SecondaryButton title="Editar Perfil" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
-        <SecondaryButton title="Segurança" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
+        <SecondaryButton title="Editar Perfil" onPress={() => navigation.navigate('EditarPerfil')} style={{ marginBottom: spacing.sm }} />
+        <SecondaryButton title="Segurança" onPress={() => navigation.navigate('AlterarSenha')} style={{ marginBottom: spacing.sm }} />
         <SecondaryButton title="Configurações" onPress={() => navigation.navigate('Configuracoes')} style={{ marginBottom: spacing.sm }} />
         <SecondaryButton title="Sair da conta" onPress={signOut} />
       </Card>

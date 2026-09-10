@@ -78,14 +78,42 @@ export function DataProvider({ children }) {
     );
   }, [hidratado, veiculos, motoristas, viagens, abastecimentos, manutencoes, documentos, receitas, despesas]);
 
+  // Helpers genéricos de update/delete por id — evitam repetir a mesma
+  // lógica para cada uma das 8 coleções. `add*` continua específico
+  // por entidade porque cada uma tem seu próprio valor padrão (ex.:
+  // status: 'Ativo').
+  function updatePorId(setter, id, alteracoes) {
+    setter((atual) => atual.map((item) => (item.id === id ? { ...item, ...alteracoes } : item)));
+  }
+  function removerPorId(setter, id) {
+    setter((atual) => atual.filter((item) => item.id !== id));
+  }
+
   const addVeiculo = (item) => setVeiculos((atual) => [{ id: gerarId(), status: 'Ativo', ...item }, ...atual]);
+  const updateVeiculo = (id, alteracoes) => updatePorId(setVeiculos, id, alteracoes);
+  const deleteVeiculo = (id) => removerPorId(setVeiculos, id);
+
   const addMotorista = (item) => setMotoristas((atual) => [{ id: gerarId(), status: 'Ativo', ...item }, ...atual]);
+  const updateMotorista = (id, alteracoes) => updatePorId(setMotoristas, id, alteracoes);
+  const deleteMotorista = (id) => removerPorId(setMotoristas, id);
+
   const addViagem = (item) => setViagens((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteViagem = (id) => removerPorId(setViagens, id);
+
   const addAbastecimento = (item) => setAbastecimentos((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteAbastecimento = (id) => removerPorId(setAbastecimentos, id);
+
   const addManutencao = (item) => setManutencoes((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteManutencao = (id) => removerPorId(setManutencoes, id);
+
   const addDocumento = (item) => setDocumentos((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteDocumento = (id) => removerPorId(setDocumentos, id);
+
   const addReceita = (item) => setReceitas((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteReceita = (id) => removerPorId(setReceitas, id);
+
   const addDespesa = (item) => setDespesas((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const deleteDespesa = (id) => removerPorId(setDespesas, id);
 
   // Totais derivados dos dados reais em memória — substituem os
   // números fixos que existiam antes só para preencher a UI.
@@ -104,14 +132,14 @@ export function DataProvider({ children }) {
   const value = {
     hidratado,
     resumo,
-    veiculos, addVeiculo,
-    motoristas, addMotorista,
-    viagens, addViagem,
-    abastecimentos, addAbastecimento,
-    manutencoes, addManutencao,
-    documentos, addDocumento,
-    receitas, addReceita,
-    despesas, addDespesa,
+    veiculos, addVeiculo, updateVeiculo, deleteVeiculo,
+    motoristas, addMotorista, updateMotorista, deleteMotorista,
+    viagens, addViagem, deleteViagem,
+    abastecimentos, addAbastecimento, deleteAbastecimento,
+    manutencoes, addManutencao, deleteManutencao,
+    documentos, addDocumento, deleteDocumento,
+    receitas, addReceita, deleteReceita,
+    despesas, addDespesa, deleteDespesa,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -19,6 +19,7 @@ import AbastecimentosScreen from '../screens/frota/AbastecimentosScreen';
 import ManutencoesScreen from '../screens/frota/ManutencoesScreen';
 import DocumentosScreen from '../screens/frota/DocumentosScreen';
 import NovoVeiculoScreen from '../screens/frota/NovoVeiculoScreen';
+import EditarVeiculoScreen from '../screens/frota/EditarVeiculoScreen';
 import NovoMotoristaScreen from '../screens/frota/NovoMotoristaScreen';
 import NovaViagemScreen from '../screens/frota/NovaViagemScreen';
 import NovoAbastecimentoScreen from '../screens/frota/NovoAbastecimentoScreen';
@@ -27,6 +28,8 @@ import NovoDocumentoScreen from '../screens/frota/NovoDocumentoScreen';
 
 import PerfilScreen from '../screens/outros/PerfilScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
+import EditarPerfilScreen from '../screens/outros/EditarPerfilScreen';
+import AlterarSenhaScreen from '../screens/outros/AlterarSenhaScreen';
 
 import { colors } from '../theme/colors';
 
@@ -61,6 +64,7 @@ function FrotaStackNavigator() {
       <FrotaStack.Screen name="Manutencoes" component={ManutencoesScreen} />
       <FrotaStack.Screen name="Documentos" component={DocumentosScreen} />
       <FrotaStack.Screen name="NovoVeiculo" component={NovoVeiculoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarVeiculo" component={EditarVeiculoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoMotorista" component={NovoMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaViagem" component={NovaViagemScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoAbastecimento" component={NovoAbastecimentoScreen} options={{ presentation: 'modal' }} />
@@ -75,6 +79,8 @@ function MaisStackNavigator() {
     <MaisStack.Navigator screenOptions={stackOptions}>
       <MaisStack.Screen name="Perfil" component={PerfilScreen} />
       <MaisStack.Screen name="Configuracoes" component={ConfiguracoesScreen} />
+      <MaisStack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ presentation: 'modal' }} />
+      <MaisStack.Screen name="AlterarSenha" component={AlterarSenhaScreen} options={{ presentation: 'modal' }} />
     </MaisStack.Navigator>
   );
 }
