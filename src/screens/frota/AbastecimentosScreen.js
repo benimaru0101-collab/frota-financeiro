@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { abastecimentos } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function AbastecimentosScreen() {
+export default function AbastecimentosScreen({ navigation }) {
+  const { abastecimentos } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -25,7 +26,7 @@ export default function AbastecimentosScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Novo Abastecimento" onPress={() => {}} />
+      <PrimaryButton title="+ Novo Abastecimento" onPress={() => navigation.navigate('NovoAbastecimento')} />
     </Screen>
   );
 }

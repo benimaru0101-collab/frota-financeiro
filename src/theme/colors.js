@@ -9,6 +9,7 @@ export const colors = {
   primary: '#FFC107',
   primaryDark: '#E5A800',
   text: '#FFFFFF',
+  darkText: '#1A1A1A',
   textMuted: '#A0A0A0',
   success: '#4CAF50',
   danger: '#F44336',

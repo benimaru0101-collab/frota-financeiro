@@ -73,6 +73,25 @@ export function GoogleButton({ title = 'Entrar com Google', onPress, loading }) 
   );
 }
 
+export function ChipSelect({ options, value, onChange }) {
+  return (
+    <View style={styles.chipSelectRow}>
+      {options.map((opt) => {
+        const selected = opt === value;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[styles.chipOption, selected && styles.chipOptionSelected]}
+          >
+            <Text style={[styles.chipOptionText, selected && styles.chipOptionTextSelected]}>{opt}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 export function StatPill({ label, value, positive }) {
   return (
     <View style={styles.statPill}>
@@ -174,5 +193,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginTop: 2,
+  },
+  chipSelectRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: spacing.md,
+  },
+  chipOption: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  chipOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipOptionText: {
+    color: colors.text,
+    fontSize: 12,
+  },
+  chipOptionTextSelected: {
+    color: colors.darkText,
+    fontWeight: '700',
   },
 });

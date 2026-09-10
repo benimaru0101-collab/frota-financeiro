@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { motoristas } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
-export default function MotoristasScreen() {
+export default function MotoristasScreen({ navigation }) {
+  const { motoristas } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -30,7 +31,7 @@ export default function MotoristasScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Novo Motorista" onPress={() => {}} />
+      <PrimaryButton title="+ Novo Motorista" onPress={() => navigation.navigate('NovoMotorista')} />
     </Screen>
   );
 }

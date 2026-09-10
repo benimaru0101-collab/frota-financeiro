@@ -8,6 +8,8 @@ import FinanceiroHomeScreen from '../screens/financeiro/FinanceiroHomeScreen';
 import ReceitasScreen from '../screens/financeiro/ReceitasScreen';
 import DespesasScreen from '../screens/financeiro/DespesasScreen';
 import FluxoDeCaixaScreen from '../screens/financeiro/FluxoDeCaixaScreen';
+import NovaReceitaScreen from '../screens/financeiro/NovaReceitaScreen';
+import NovaDespesaScreen from '../screens/financeiro/NovaDespesaScreen';
 
 import FrotaHomeScreen from '../screens/frota/FrotaHomeScreen';
 import VeiculoDetalhesScreen from '../screens/frota/VeiculoDetalhesScreen';
@@ -16,6 +18,12 @@ import ViagensScreen from '../screens/frota/ViagensScreen';
 import AbastecimentosScreen from '../screens/frota/AbastecimentosScreen';
 import ManutencoesScreen from '../screens/frota/ManutencoesScreen';
 import DocumentosScreen from '../screens/frota/DocumentosScreen';
+import NovoVeiculoScreen from '../screens/frota/NovoVeiculoScreen';
+import NovoMotoristaScreen from '../screens/frota/NovoMotoristaScreen';
+import NovaViagemScreen from '../screens/frota/NovaViagemScreen';
+import NovoAbastecimentoScreen from '../screens/frota/NovoAbastecimentoScreen';
+import NovaManutencaoScreen from '../screens/frota/NovaManutencaoScreen';
+import NovoDocumentoScreen from '../screens/frota/NovoDocumentoScreen';
 
 import PerfilScreen from '../screens/outros/PerfilScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
@@ -36,6 +44,8 @@ function FinanceiroStackNavigator() {
       <FinanceiroStack.Screen name="Receitas" component={ReceitasScreen} />
       <FinanceiroStack.Screen name="Despesas" component={DespesasScreen} />
       <FinanceiroStack.Screen name="FluxoDeCaixa" component={FluxoDeCaixaScreen} />
+      <FinanceiroStack.Screen name="NovaReceita" component={NovaReceitaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="NovaDespesa" component={NovaDespesaScreen} options={{ presentation: 'modal' }} />
     </FinanceiroStack.Navigator>
   );
 }
@@ -50,6 +60,12 @@ function FrotaStackNavigator() {
       <FrotaStack.Screen name="Abastecimentos" component={AbastecimentosScreen} />
       <FrotaStack.Screen name="Manutencoes" component={ManutencoesScreen} />
       <FrotaStack.Screen name="Documentos" component={DocumentosScreen} />
+      <FrotaStack.Screen name="NovoVeiculo" component={NovoVeiculoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="NovoMotorista" component={NovoMotoristaScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="NovaViagem" component={NovaViagemScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="NovoAbastecimento" component={NovoAbastecimentoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="NovaManutencao" component={NovaManutencaoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="NovoDocumento" component={NovoDocumentoScreen} options={{ presentation: 'modal' }} />
     </FrotaStack.Navigator>
   );
 }

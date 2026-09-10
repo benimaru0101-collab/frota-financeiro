@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { viagens } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function ViagensScreen() {
+export default function ViagensScreen({ navigation }) {
+  const { viagens } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -25,7 +26,7 @@ export default function ViagensScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Nova Viagem" onPress={() => {}} />
+      <PrimaryButton title="+ Nova Viagem" onPress={() => navigation.navigate('NovaViagem')} />
     </Screen>
   );
 }

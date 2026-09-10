@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { documentos } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function DocumentosScreen() {
+export default function DocumentosScreen({ navigation }) {
+  const { documentos } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -25,7 +26,7 @@ export default function DocumentosScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Novo Documento" onPress={() => {}} />
+      <PrimaryButton title="+ Novo Documento" onPress={() => navigation.navigate('NovoDocumento')} />
     </Screen>
   );
 }

@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { despesas, dashboardResumo } from '../../data/mockData';
+import { dashboardResumo } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function DespesasScreen() {
+export default function DespesasScreen({ navigation }) {
+  const { despesas } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -26,7 +28,7 @@ export default function DespesasScreen() {
         )}
       />
       <Text style={styles.total}>Total do Mês: {dashboardResumo.despesasMes}</Text>
-      <PrimaryButton title="+ Nova Despesa" onPress={() => {}} />
+      <PrimaryButton title="+ Nova Despesa" onPress={() => navigation.navigate('NovaDespesa')} />
     </Screen>
   );
 }

@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { manutencoes } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function ManutencoesScreen() {
+export default function ManutencoesScreen({ navigation }) {
+  const { manutencoes } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -25,7 +26,7 @@ export default function ManutencoesScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Nova Manutenção" onPress={() => {}} />
+      <PrimaryButton title="+ Nova Manutenção" onPress={() => navigation.navigate('NovaManutencao')} />
     </Screen>
   );
 }

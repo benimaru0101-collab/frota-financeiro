@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { receitas } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function ReceitasScreen() {
+export default function ReceitasScreen({ navigation }) {
+  const { receitas } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -22,7 +23,7 @@ export default function ReceitasScreen() {
           </Card>
         )}
       />
-      <PrimaryButton title="+ Nova Receita" onPress={() => {}} />
+      <PrimaryButton title="+ Nova Receita" onPress={() => navigation.navigate('NovaReceita')} />
     </Screen>
   );
 }

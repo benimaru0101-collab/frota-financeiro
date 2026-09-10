@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { veiculos } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
 export default function FrotaHomeScreen({ navigation }) {
+  const { veiculos } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
@@ -36,7 +37,7 @@ export default function FrotaHomeScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
-      <PrimaryButton title="+ Novo Veículo" onPress={() => {}} />
+      <PrimaryButton title="+ Novo Veículo" onPress={() => navigation.navigate('NovoVeiculo')} />
     </Screen>
   );
 }
