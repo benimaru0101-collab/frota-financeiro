@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -12,6 +12,7 @@ export default function MotoristasScreen({ navigation }) {
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Motoristas</Title>
+        <Subtitle>Toque em um motorista para editar</Subtitle>
       </View>
       <Input placeholder="Buscar motorista" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -19,18 +20,20 @@ export default function MotoristasScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <Card style={styles.item}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.nome.charAt(0)}</Text>
-            </View>
-            <View style={{ flex: 1, marginLeft: spacing.md }}>
-              <Text style={styles.nome}>{item.nome}</Text>
-              <Text style={styles.cnh}>{item.cnh}</Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: item.status === 'Ativo' ? colors.success : colors.textMuted }]}>
-              <Text style={styles.badgeText}>{item.status}</Text>
-            </View>
-          </Card>
+          <TouchableOpacity onPress={() => navigation.navigate('EditarMotorista', { motorista: item })}>
+            <Card style={styles.item}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.nome.charAt(0)}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
+                <Text style={styles.nome}>{item.nome}</Text>
+                <Text style={styles.cnh}>{item.cnh}</Text>
+              </View>
+              <View style={[styles.badge, { backgroundColor: item.status === 'Ativo' ? colors.success : colors.textMuted }]}>
+                <Text style={styles.badgeText}>{item.status}</Text>
+              </View>
+            </Card>
+          </TouchableOpacity>
         )}
       />
       <PrimaryButton title="+ Novo Motorista" onPress={() => navigation.navigate('NovoMotorista')} />

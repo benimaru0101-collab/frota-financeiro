@@ -1,17 +1,26 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function ReceitasScreen({ navigation }) {
-  const { receitas } = useData();
+  const { receitas, deleteReceita } = useData();
   const [busca, setBusca] = React.useState('');
   const filtradas = receitas.filter((r) => r.descricao.toLowerCase().includes(busca.toLowerCase()));
+
+  function confirmarExclusao(item) {
+    Alert.alert('Excluir receita', `Excluir "${item.descricao}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: () => deleteReceita(item.id) },
+    ]);
+  }
+
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Receitas</Title>
+        <Subtitle>Toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar receita" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -19,10 +28,12 @@ export default function ReceitasScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => (
-          <Card style={styles.item}>
-            <Text style={styles.descricao}>{item.descricao}</Text>
-            <Text style={styles.valor}>{item.valor}</Text>
-          </Card>
+          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+            <Card style={styles.item}>
+              <Text style={styles.descricao}>{item.descricao}</Text>
+              <Text style={styles.valor}>{item.valor}</Text>
+            </Card>
+          </TouchableOpacity>
         )}
       />
       <PrimaryButton title="+ Nova Receita" onPress={() => navigation.navigate('NovaReceita')} />

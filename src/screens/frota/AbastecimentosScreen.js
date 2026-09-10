@@ -1,17 +1,26 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function AbastecimentosScreen({ navigation }) {
-  const { abastecimentos } = useData();
+  const { abastecimentos, deleteAbastecimento } = useData();
   const [busca, setBusca] = React.useState('');
   const filtrados = abastecimentos.filter((a) => a.placa.toLowerCase().includes(busca.toLowerCase()));
+
+  function confirmarExclusao(item) {
+    Alert.alert('Excluir abastecimento', `Excluir o abastecimento de ${item.placa}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: () => deleteAbastecimento(item.id) },
+    ]);
+  }
+
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Abastecimentos</Title>
+        <Subtitle>Toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar abastecimento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -19,13 +28,15 @@ export default function AbastecimentosScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <Card style={styles.item}>
-            <View>
-              <Text style={styles.placa}>{item.placa}</Text>
-              <Text style={styles.meta}>{item.litros} · {item.data}</Text>
-            </View>
-            <Text style={styles.valor}>{item.valor}</Text>
-          </Card>
+          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+            <Card style={styles.item}>
+              <View>
+                <Text style={styles.placa}>{item.placa}</Text>
+                <Text style={styles.meta}>{item.litros} · {item.data}</Text>
+              </View>
+              <Text style={styles.valor}>{item.valor}</Text>
+            </Card>
+          </TouchableOpacity>
         )}
       />
       <PrimaryButton title="+ Novo Abastecimento" onPress={() => navigation.navigate('NovoAbastecimento')} />

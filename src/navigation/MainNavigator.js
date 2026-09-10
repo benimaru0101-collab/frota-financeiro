@@ -21,6 +21,7 @@ import DocumentosScreen from '../screens/frota/DocumentosScreen';
 import NovoVeiculoScreen from '../screens/frota/NovoVeiculoScreen';
 import EditarVeiculoScreen from '../screens/frota/EditarVeiculoScreen';
 import NovoMotoristaScreen from '../screens/frota/NovoMotoristaScreen';
+import EditarMotoristaScreen from '../screens/frota/EditarMotoristaScreen';
 import NovaViagemScreen from '../screens/frota/NovaViagemScreen';
 import NovoAbastecimentoScreen from '../screens/frota/NovoAbastecimentoScreen';
 import NovaManutencaoScreen from '../screens/frota/NovaManutencaoScreen';
@@ -66,6 +67,7 @@ function FrotaStackNavigator() {
       <FrotaStack.Screen name="NovoVeiculo" component={NovoVeiculoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="EditarVeiculo" component={EditarVeiculoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoMotorista" component={NovoMotoristaScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarMotorista" component={EditarMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaViagem" component={NovaViagemScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoAbastecimento" component={NovoAbastecimentoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaManutencao" component={NovaManutencaoScreen} options={{ presentation: 'modal' }} />

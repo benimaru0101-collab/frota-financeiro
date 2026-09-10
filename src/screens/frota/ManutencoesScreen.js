@@ -1,19 +1,28 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
+import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function ManutencoesScreen({ navigation }) {
-  const { manutencoes } = useData();
+  const { manutencoes, deleteManutencao } = useData();
   const [busca, setBusca] = React.useState('');
   const filtradas = manutencoes.filter(
     (m) => m.placa.toLowerCase().includes(busca.toLowerCase()) || m.tipo.toLowerCase().includes(busca.toLowerCase())
   );
+
+  function confirmarExclusao(item) {
+    Alert.alert('Excluir manutenção', `Excluir a manutenção de ${item.placa}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: () => deleteManutencao(item.id) },
+    ]);
+  }
+
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Manutenções</Title>
+        <Subtitle>Toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar manutenção" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -21,13 +30,15 @@ export default function ManutencoesScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <Card style={styles.item}>
-            <View>
-              <Text style={styles.placa}>{item.placa}</Text>
-              <Text style={styles.meta}>{item.tipo} · {item.data}</Text>
-            </View>
-            <Text style={styles.valor}>{item.valor}</Text>
-          </Card>
+          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+            <Card style={styles.item}>
+              <View>
+                <Text style={styles.placa}>{item.placa}</Text>
+                <Text style={styles.meta}>{item.tipo} · {item.data}</Text>
+              </View>
+              <Text style={styles.valor}>{item.valor}</Text>
+            </Card>
+          </TouchableOpacity>
         )}
       />
       <PrimaryButton title="+ Nova Manutenção" onPress={() => navigation.navigate('NovaManutencao')} />
