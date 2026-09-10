@@ -6,14 +6,16 @@ import { colors, spacing } from '../../theme/colors';
 
 export default function AbastecimentosScreen({ navigation }) {
   const { abastecimentos } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtrados = abastecimentos.filter((a) => a.placa.toLowerCase().includes(busca.toLowerCase()));
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Abastecimentos</Title>
       </View>
-      <Input placeholder="Buscar abastecimento" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar abastecimento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={abastecimentos}
+        data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

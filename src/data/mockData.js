@@ -49,9 +49,6 @@ export const despesas = [
   { id: '4', descricao: 'Pedágio', valor: 'R$ 1.500,00', categoria: 'Frota' },
 ];
 
-export const dashboardResumo = {
-  saldoTotal: 'R$ 45.750,00',
-  receitasMes: 'R$ 78.000,00',
-  despesasMes: 'R$ 32.250,00',
-  veiculosAtivos: 12,
-};
+// Observação: o resumo do dashboard (saldo, receitas/despesas do mês,
+// veículos ativos) deixou de ser um valor fixo — agora é calculado a
+// partir destes arrays em tempo real pelo DataContext (`resumo`).

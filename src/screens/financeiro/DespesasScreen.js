@@ -1,20 +1,21 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
-import { dashboardResumo } from '../../data/mockData';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function DespesasScreen({ navigation }) {
-  const { despesas } = useData();
+  const { despesas, resumo } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtradas = despesas.filter((d) => d.descricao.toLowerCase().includes(busca.toLowerCase()));
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Despesas</Title>
       </View>
-      <Input placeholder="Buscar despesa" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar despesa" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={despesas}
+        data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
@@ -27,7 +28,7 @@ export default function DespesasScreen({ navigation }) {
           </Card>
         )}
       />
-      <Text style={styles.total}>Total do Mês: {dashboardResumo.despesasMes}</Text>
+      <Text style={styles.total}>Total do Mês: {resumo.despesasMes}</Text>
       <PrimaryButton title="+ Nova Despesa" onPress={() => navigation.navigate('NovaDespesa')} />
     </Screen>
   );

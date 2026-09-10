@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Screen, Card, Title, StatPill } from '../../components/UI';
-import { dashboardResumo } from '../../data/mockData';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 // Gráfico simplificado com barras em View (sem dependência de lib de
@@ -10,6 +10,7 @@ import { colors, spacing } from '../../theme/colors';
 const pontos = [40, 55, 35, 60, 48, 70, 65, 80, 58];
 
 export default function FluxoDeCaixaScreen() {
+  const { resumo } = useData();
   const max = Math.max(...pontos);
   return (
     <Screen>
@@ -30,7 +31,7 @@ export default function FluxoDeCaixaScreen() {
       </Card>
 
       <View style={styles.statsRow}>
-        <StatPill label="Saldo do Mês" value={dashboardResumo.saldoTotal} positive />
+        <StatPill label="Saldo do Mês" value={resumo.saldoTotal} positive />
       </View>
     </Screen>
   );

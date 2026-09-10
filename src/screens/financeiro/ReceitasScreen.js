@@ -6,14 +6,16 @@ import { colors, spacing } from '../../theme/colors';
 
 export default function ReceitasScreen({ navigation }) {
   const { receitas } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtradas = receitas.filter((r) => r.descricao.toLowerCase().includes(busca.toLowerCase()));
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Receitas</Title>
       </View>
-      <Input placeholder="Buscar receita" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar receita" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={receitas}
+        data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         renderItem={({ item }) => (

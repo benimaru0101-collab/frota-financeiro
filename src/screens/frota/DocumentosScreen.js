@@ -6,14 +6,18 @@ import { colors, spacing } from '../../theme/colors';
 
 export default function DocumentosScreen({ navigation }) {
   const { documentos } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtrados = documentos.filter(
+    (d) => d.placa.toLowerCase().includes(busca.toLowerCase()) || d.tipo.toLowerCase().includes(busca.toLowerCase())
+  );
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Documentos</Title>
       </View>
-      <Input placeholder="Buscar documento" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar documento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={documentos}
+        data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

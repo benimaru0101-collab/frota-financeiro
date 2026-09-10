@@ -6,12 +6,16 @@ import { colors, spacing, radius } from '../../theme/colors';
 
 export default function FrotaHomeScreen({ navigation }) {
   const { veiculos } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtrados = veiculos.filter(
+    (v) => v.placa.toLowerCase().includes(busca.toLowerCase()) || v.modelo.toLowerCase().includes(busca.toLowerCase())
+  );
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Frota</Title>
       </View>
-      <Input placeholder="Buscar veículo" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar veículo" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
 
       <View style={styles.menuRow}>
         <MenuChip label="Motoristas" onPress={() => navigation.navigate('Motoristas')} />
@@ -22,7 +26,7 @@ export default function FrotaHomeScreen({ navigation }) {
       </View>
 
       <FlatList
-        data={veiculos}
+        data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

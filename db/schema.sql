@@ -129,16 +129,53 @@ alter table manutencoes enable row level security;
 alter table documentos enable row level security;
 alter table receitas enable row level security;
 alter table despesas enable row level security;
+alter table categorias_financeiras enable row level security;
 
-create policy "Usuários autenticados podem ler tudo"
-  on veiculos for select
+-- profiles: cada usuário só enxerga e edita o próprio perfil.
+create policy "Usuário vê o próprio perfil"
+  on profiles for select
   to authenticated
-  using (true);
+  using (auth.uid() = id);
 
-create policy "Usuários autenticados podem inserir"
-  on veiculos for insert
+create policy "Usuário edita o próprio perfil"
+  on profiles for update
   to authenticated
-  with check (true);
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
 
--- Repita policies equivalentes para as demais tabelas conforme a
--- necessidade de cada tela (este arquivo cobre o MVP do setup inicial).
+create policy "Usuário cria o próprio perfil"
+  on profiles for insert
+  to authenticated
+  with check (auth.uid() = id);
+
+-- Demais tabelas: modelo de equipe única (todo usuário autenticado
+-- lê e escreve tudo). Se o app crescer para múltiplas empresas/frotas,
+-- troque `using (true)` por uma checagem de "empresa_id" do usuário.
+do $$
+declare
+  tabela text;
+begin
+  foreach tabela in array array[
+    'veiculos', 'motoristas', 'viagens', 'abastecimentos',
+    'manutencoes', 'documentos', 'receitas', 'despesas',
+    'categorias_financeiras'
+  ]
+  loop
+    execute format(
+      'create policy "Usuários autenticados podem ler (%1$s)" on %1$s for select to authenticated using (true);',
+      tabela
+    );
+    execute format(
+      'create policy "Usuários autenticados podem inserir (%1$s)" on %1$s for insert to authenticated with check (true);',
+      tabela
+    );
+    execute format(
+      'create policy "Usuários autenticados podem atualizar (%1$s)" on %1$s for update to authenticated using (true) with check (true);',
+      tabela
+    );
+    execute format(
+      'create policy "Usuários autenticados podem excluir (%1$s)" on %1$s for delete to authenticated using (true);',
+      tabela
+    );
+  end loop;
+end $$;

@@ -6,14 +6,18 @@ import { colors, spacing } from '../../theme/colors';
 
 export default function ViagensScreen({ navigation }) {
   const { viagens } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtradas = viagens.filter(
+    (v) => v.origemDestino.toLowerCase().includes(busca.toLowerCase()) || v.placa.toLowerCase().includes(busca.toLowerCase())
+  );
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Viagens</Title>
       </View>
-      <Input placeholder="Buscar viagem" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar viagem" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={viagens}
+        data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

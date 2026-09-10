@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Subtitle } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardResumo } from '../data/mockData';
+import { useData } from '../contexts/DataContext';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
+  const { resumo: dashboardResumo } = useData();
   const primeiroNome = (user?.user_metadata?.full_name || user?.email || 'Juliano').split(' ')[0];
 
   return (

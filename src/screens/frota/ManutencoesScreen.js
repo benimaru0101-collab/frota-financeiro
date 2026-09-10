@@ -6,14 +6,18 @@ import { colors, spacing } from '../../theme/colors';
 
 export default function ManutencoesScreen({ navigation }) {
   const { manutencoes } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtradas = manutencoes.filter(
+    (m) => m.placa.toLowerCase().includes(busca.toLowerCase()) || m.tipo.toLowerCase().includes(busca.toLowerCase())
+  );
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Manutenções</Title>
       </View>
-      <Input placeholder="Buscar manutenção" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar manutenção" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={manutencoes}
+        data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

@@ -6,14 +6,16 @@ import { colors, spacing, radius } from '../../theme/colors';
 
 export default function MotoristasScreen({ navigation }) {
   const { motoristas } = useData();
+  const [busca, setBusca] = React.useState('');
+  const filtrados = motoristas.filter((m) => m.nome.toLowerCase().includes(busca.toLowerCase()));
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Motoristas</Title>
       </View>
-      <Input placeholder="Buscar motorista" style={{ marginTop: spacing.md }} />
+      <Input placeholder="Buscar motorista" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
-        data={motoristas}
+        data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (

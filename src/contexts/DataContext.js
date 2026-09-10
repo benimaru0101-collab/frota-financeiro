@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import { parseValorBR, formatValorBR } from '../utils/money';
 import {
   veiculos as veiculosIniciais,
   motoristas as motoristasIniciais,
@@ -39,7 +40,22 @@ export function DataProvider({ children }) {
   const addReceita = (item) => setReceitas((atual) => [{ id: gerarId(), ...item }, ...atual]);
   const addDespesa = (item) => setDespesas((atual) => [{ id: gerarId(), ...item }, ...atual]);
 
+  // Totais derivados dos dados reais em memória — substituem os
+  // números fixos que existiam antes só para preencher a UI.
+  const resumo = useMemo(() => {
+    const totalReceitas = receitas.reduce((soma, r) => soma + parseValorBR(r.valor), 0);
+    const totalDespesas = despesas.reduce((soma, d) => soma + parseValorBR(d.valor), 0);
+    const veiculosAtivos = veiculos.filter((v) => v.status === 'Ativo').length;
+    return {
+      saldoTotal: formatValorBR(totalReceitas - totalDespesas),
+      receitasMes: formatValorBR(totalReceitas),
+      despesasMes: formatValorBR(totalDespesas),
+      veiculosAtivos,
+    };
+  }, [receitas, despesas, veiculos]);
+
   const value = {
+    resumo,
     veiculos, addVeiculo,
     motoristas, addMotorista,
     viagens, addViagem,
