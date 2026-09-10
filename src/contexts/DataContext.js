@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { parseValorBR, formatValorBR } from '../utils/money';
 import {
   veiculos as veiculosIniciais,
@@ -11,11 +12,14 @@ import {
   despesas as despesasIniciais,
 } from '../data/mockData';
 
-// Estado em memória para o protótipo funcional. Quando o Supabase
-// estiver configurado (ver README), troque cada `add*` por um
-// `supabase.from('tabela').insert(...)` e derive as listas de um
-// `useEffect` com `supabase.from('tabela').select()`.
+// Estado local (com persistência em AsyncStorage) para o protótipo
+// funcional. Quando o Supabase estiver configurado (ver README),
+// troque cada `add*` por um `supabase.from('tabela').insert(...)` e
+// derive as listas de um `useEffect` com `supabase.from('tabela').select()`
+// — a essa altura, esta persistência local deixa de ser necessária.
 const DataContext = createContext(null);
+
+const STORAGE_KEY = '@frota_financeiro/dados_locais_v1';
 
 function gerarId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -30,6 +34,49 @@ export function DataProvider({ children }) {
   const [documentos, setDocumentos] = useState(documentosIniciais);
   const [receitas, setReceitas] = useState(receitasIniciais);
   const [despesas, setDespesas] = useState(despesasIniciais);
+  const [hidratado, setHidratado] = useState(false);
+
+  // Carrega o que foi salvo no dispositivo na primeira montagem. Se
+  // nunca houve nada salvo (primeira instalação), mantém os dados de
+  // exemplo definidos em mockData.js.
+  useEffect(() => {
+    (async () => {
+      try {
+        const salvo = await AsyncStorage.getItem(STORAGE_KEY);
+        if (salvo) {
+          const dados = JSON.parse(salvo);
+          if (dados.veiculos) setVeiculos(dados.veiculos);
+          if (dados.motoristas) setMotoristas(dados.motoristas);
+          if (dados.viagens) setViagens(dados.viagens);
+          if (dados.abastecimentos) setAbastecimentos(dados.abastecimentos);
+          if (dados.manutencoes) setManutencoes(dados.manutencoes);
+          if (dados.documentos) setDocumentos(dados.documentos);
+          if (dados.receitas) setReceitas(dados.receitas);
+          if (dados.despesas) setDespesas(dados.despesas);
+        }
+      } catch (erro) {
+        console.warn('Não foi possível carregar os dados salvos:', erro);
+      } finally {
+        setHidratado(true);
+      }
+    })();
+  }, []);
+
+  // Salva a cada mudança, mas só depois que a hidratação inicial
+  // terminou — evita sobrescrever o que já estava salvo com os dados
+  // de exemplo no instante em que o app abre.
+  const primeiraExecucao = useRef(true);
+  useEffect(() => {
+    if (!hidratado) return;
+    if (primeiraExecucao.current) {
+      primeiraExecucao.current = false;
+      return;
+    }
+    const dados = { veiculos, motoristas, viagens, abastecimentos, manutencoes, documentos, receitas, despesas };
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(dados)).catch((erro) =>
+      console.warn('Não foi possível salvar os dados:', erro)
+    );
+  }, [hidratado, veiculos, motoristas, viagens, abastecimentos, manutencoes, documentos, receitas, despesas]);
 
   const addVeiculo = (item) => setVeiculos((atual) => [{ id: gerarId(), status: 'Ativo', ...item }, ...atual]);
   const addMotorista = (item) => setMotoristas((atual) => [{ id: gerarId(), status: 'Ativo', ...item }, ...atual]);
@@ -55,6 +102,7 @@ export function DataProvider({ children }) {
   }, [receitas, despesas, veiculos]);
 
   const value = {
+    hidratado,
     resumo,
     veiculos, addVeiculo,
     motoristas, addMotorista,

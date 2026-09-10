@@ -1,12 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Screen, Card, Title, SecondaryButton } from '../../components/UI';
+import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
-export default function VeiculoDetalhesScreen({ route }) {
-  const veiculo = route?.params?.veiculo ?? {
-    placa: 'ABC-1234', modelo: 'Mercedes FH 460', tipo: 'Cavalo Mecânico', status: 'Ativo', km: '175.000 km',
-  };
+export default function VeiculoDetalhesScreen({ route, navigation }) {
+  const { veiculos } = useData();
+  const veiculoRecebido = route?.params?.veiculo;
+
+  // Busca a versão mais atual do veículo pelo id — assim, se o
+  // usuário editar algo depois (quando o CRUD completo existir), esta
+  // tela reflete o estado real em vez do snapshot passado na navegação.
+  const veiculo =
+    veiculos.find((v) => v.id === veiculoRecebido?.id) ??
+    veiculoRecebido ?? {
+      placa: 'ABC-1234', modelo: 'Mercedes FH 460', tipo: 'Cavalo Mecânico', status: 'Ativo', km: '175.000 km',
+    };
 
   return (
     <Screen>
@@ -23,9 +32,9 @@ export default function VeiculoDetalhesScreen({ route }) {
       </Card>
 
       <Text style={styles.sectionTitle}>Ações</Text>
-      <SecondaryButton title="Viagens" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
-      <SecondaryButton title="Manutenções" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
-      <SecondaryButton title="Documentos" onPress={() => {}} style={{ marginBottom: spacing.sm }} />
+      <SecondaryButton title="Viagens" onPress={() => navigation.navigate('Viagens')} style={{ marginBottom: spacing.sm }} />
+      <SecondaryButton title="Manutenções" onPress={() => navigation.navigate('Manutencoes')} style={{ marginBottom: spacing.sm }} />
+      <SecondaryButton title="Documentos" onPress={() => navigation.navigate('Documentos')} style={{ marginBottom: spacing.sm }} />
       <SecondaryButton title="Editar" onPress={() => {}} />
     </Screen>
   );
