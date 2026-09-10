@@ -1,4 +1,5 @@
 node_modules/
+pptx_build/
 .expo/
 .expo-shared/
 dist/
