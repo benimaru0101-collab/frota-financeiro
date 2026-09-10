@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Financeiro e Frota Logística",
+    "slug": "financeiro-frota-logistica",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "frotafinanceiro",
+    "splash": {
+      "backgroundColor": "#121212"
+    },
+    "android": {
+      "package": "com.tempesta.frotafinanceiro",
+      "adaptiveIcon": {
+        "backgroundColor": "#121212"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.tempesta.frotafinanceiro"
+    },
+    "extra": {
+      "supabaseUrl": "SUA_SUPABASE_URL_AQUI",
+      "supabaseAnonKey": "SUA_SUPABASE_ANON_KEY_AQUI",
+      "googleExpoClientId": "SEU_GOOGLE_CLIENT_ID_EXPO",
+      "googleAndroidClientId": "SEU_GOOGLE_CLIENT_ID_ANDROID",
+      "googleIosClientId": "SEU_GOOGLE_CLIENT_ID_IOS"
+    }
+  }
+}

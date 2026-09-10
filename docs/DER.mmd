@@ -1,0 +1,90 @@
+erDiagram
+    PROFILES ||--o{ VEICULOS : cadastra
+    VEICULOS ||--o{ VIAGENS : realiza
+    MOTORISTAS ||--o{ VIAGENS : dirige
+    VEICULOS ||--o{ ABASTECIMENTOS : abastece
+    VEICULOS ||--o{ MANUTENCOES : recebe
+    VEICULOS ||--o{ DOCUMENTOS : possui
+    VEICULOS ||--o{ DESPESAS : gera
+    VIAGENS ||--o{ RECEITAS : gera
+    CATEGORIAS_FINANCEIRAS ||--o{ RECEITAS : classifica
+    CATEGORIAS_FINANCEIRAS ||--o{ DESPESAS : classifica
+
+    PROFILES {
+        uuid id PK
+        text nome
+        text email
+        text avatar_url
+    }
+    VEICULOS {
+        uuid id PK
+        text placa
+        text modelo
+        text tipo
+        text status
+        numeric km_atual
+        uuid criado_por FK
+    }
+    MOTORISTAS {
+        uuid id PK
+        text nome
+        text cnh_numero
+        text cnh_categoria
+        date cnh_validade
+        text status
+    }
+    VIAGENS {
+        uuid id PK
+        uuid veiculo_id FK
+        uuid motorista_id FK
+        text origem
+        text destino
+        date data_viagem
+        numeric valor
+        text status
+    }
+    ABASTECIMENTOS {
+        uuid id PK
+        uuid veiculo_id FK
+        numeric litros
+        numeric valor
+        text posto
+        date data_abastecimento
+    }
+    MANUTENCOES {
+        uuid id PK
+        uuid veiculo_id FK
+        text tipo
+        text descricao
+        numeric valor
+        date data_manutencao
+    }
+    DOCUMENTOS {
+        uuid id PK
+        uuid veiculo_id FK
+        text tipo
+        text numero
+        date data_emissao
+        date data_vencimento
+    }
+    CATEGORIAS_FINANCEIRAS {
+        uuid id PK
+        text nome
+        text tipo
+    }
+    RECEITAS {
+        uuid id PK
+        text descricao
+        numeric valor
+        uuid categoria_id FK
+        uuid viagem_id FK
+        date data_receita
+    }
+    DESPESAS {
+        uuid id PK
+        text descricao
+        numeric valor
+        uuid categoria_id FK
+        uuid veiculo_id FK
+        date data_despesa
+    }
