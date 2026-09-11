@@ -30,7 +30,10 @@ export default function ReceitasScreen({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
             <Card style={styles.item}>
-              <Text style={styles.descricao}>{item.descricao}</Text>
+              <View>
+                <Text style={styles.descricao}>{item.descricao}</Text>
+                {item.data ? <Text style={styles.data}>{item.data}</Text> : null}
+              </View>
               <Text style={styles.valor}>{item.valor}</Text>
             </Card>
           </TouchableOpacity>
@@ -44,5 +47,6 @@ export default function ReceitasScreen({ navigation }) {
 const styles = StyleSheet.create({
   item: { marginTop: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   descricao: { color: colors.text, fontSize: 15 },
+  data: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   valor: { color: colors.success, fontWeight: '700' },
 });

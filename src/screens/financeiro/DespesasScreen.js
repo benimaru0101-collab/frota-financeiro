@@ -32,7 +32,7 @@ export default function DespesasScreen({ navigation }) {
             <Card style={styles.item}>
               <View>
                 <Text style={styles.descricao}>{item.descricao}</Text>
-                <Text style={styles.categoria}>{item.categoria}</Text>
+                <Text style={styles.categoria}>{item.categoria}{item.data ? ` · ${item.data}` : ''}</Text>
               </View>
               <Text style={styles.valor}>{item.valor}</Text>
             </Card>

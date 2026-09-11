@@ -14,13 +14,18 @@ export default function NovaReceitaScreen({ navigation }) {
   const { addReceita } = useData();
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
+  const [data, setData] = useState('');
 
   function handleSalvar() {
     if (!descricao.trim() || !valor.trim()) {
       Alert.alert('Preencha a descrição e o valor');
       return;
     }
-    addReceita({ descricao: descricao.trim(), valor: formatarValor(valor) });
+    addReceita({
+      descricao: descricao.trim(),
+      valor: formatarValor(valor),
+      data: data.trim() || new Date().toLocaleDateString('pt-BR'),
+    });
     navigation.goBack();
   }
 
@@ -36,6 +41,8 @@ export default function NovaReceitaScreen({ navigation }) {
         <Input placeholder="Ex.: Frota - Transporte X" value={descricao} onChangeText={setDescricao} />
         <Label>Valor</Label>
         <Input placeholder="0,00" keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
+        <Label>Data</Label>
+        <Input placeholder="DD/MM/AAAA" value={data} onChangeText={setData} />
         <PrimaryButton title="Salvar Receita" onPress={handleSalvar} />
       </View>
     </Screen>

@@ -17,13 +17,19 @@ export default function NovaDespesaScreen({ navigation }) {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [categoria, setCategoria] = useState(CATEGORIAS[0]);
+  const [data, setData] = useState('');
 
   function handleSalvar() {
     if (!descricao.trim() || !valor.trim()) {
       Alert.alert('Preencha a descrição e o valor');
       return;
     }
-    addDespesa({ descricao: descricao.trim(), valor: formatarValor(valor), categoria });
+    addDespesa({
+      descricao: descricao.trim(),
+      valor: formatarValor(valor),
+      categoria,
+      data: data.trim() || new Date().toLocaleDateString('pt-BR'),
+    });
     navigation.goBack();
   }
 
@@ -41,6 +47,8 @@ export default function NovaDespesaScreen({ navigation }) {
         <Input placeholder="0,00" keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
         <Label>Categoria</Label>
         <ChipSelect options={CATEGORIAS} value={categoria} onChange={setCategoria} />
+        <Label>Data</Label>
+        <Input placeholder="DD/MM/AAAA" value={data} onChangeText={setData} />
         <PrimaryButton title="Salvar Despesa" onPress={handleSalvar} />
       </View>
     </Screen>

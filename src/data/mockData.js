@@ -37,16 +37,16 @@ export const documentos = [
 ];
 
 export const receitas = [
-  { id: '1', descricao: 'Frota - Transporte X', valor: 'R$ 12.500,00' },
-  { id: '2', descricao: 'Frota - Empresa Y', valor: 'R$ 8.900,00' },
-  { id: '3', descricao: 'Frota - Cliente Z', valor: 'R$ 6.400,00' },
+  { id: '1', descricao: 'Frota - Transporte X', valor: 'R$ 12.500,00', data: '10/04/2024' },
+  { id: '2', descricao: 'Frota - Empresa Y', valor: 'R$ 8.900,00', data: '22/05/2024' },
+  { id: '3', descricao: 'Frota - Cliente Z', valor: 'R$ 6.400,00', data: '05/06/2024' },
 ];
 
 export const despesas = [
-  { id: '1', descricao: 'Combustível', valor: 'R$ 15.200,00', categoria: 'Frota' },
-  { id: '2', descricao: 'Manutenção', valor: 'R$ 8.750,00', categoria: 'Frota' },
-  { id: '3', descricao: 'Serviço Extra', valor: 'R$ 1.300,00', categoria: 'Operacional' },
-  { id: '4', descricao: 'Pedágio', valor: 'R$ 1.500,00', categoria: 'Frota' },
+  { id: '1', descricao: 'Combustível', valor: 'R$ 15.200,00', categoria: 'Frota', data: '08/04/2024' },
+  { id: '2', descricao: 'Manutenção', valor: 'R$ 8.750,00', categoria: 'Frota', data: '15/05/2024' },
+  { id: '3', descricao: 'Serviço Extra', valor: 'R$ 1.300,00', categoria: 'Operacional', data: '20/05/2024' },
+  { id: '4', descricao: 'Pedágio', valor: 'R$ 1.500,00', categoria: 'Frota', data: '03/06/2024' },
 ];
 
 // Observação: o resumo do dashboard (saldo, receitas/despesas do mês,
