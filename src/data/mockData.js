@@ -16,9 +16,9 @@ export const motoristas = [
 ];
 
 export const viagens = [
-  { id: '1', origemDestino: 'São Paulo - Curitiba', placa: 'ABC-1234', data: '10/06/2024', valor: 'R$ 3.200,00' },
-  { id: '2', origemDestino: 'Curitiba - Porto Alegre', placa: 'DEF-5678', data: '12/06/2024', valor: 'R$ 2.850,00' },
-  { id: '3', origemDestino: 'Belo Horizonte - Vitória', placa: 'GHI-9101', data: '15/06/2024', valor: 'R$ 1.980,00' },
+  { id: '1', origemDestino: 'São Paulo - Curitiba', placa: 'ABC-1234', motorista: 'Carlos Silva', data: '10/06/2024', valor: 'R$ 3.200,00' },
+  { id: '2', origemDestino: 'Curitiba - Porto Alegre', placa: 'DEF-5678', motorista: 'João Santos', data: '12/06/2024', valor: 'R$ 2.850,00' },
+  { id: '3', origemDestino: 'Belo Horizonte - Vitória', placa: 'GHI-9101', motorista: 'Carlos Silva', data: '15/06/2024', valor: 'R$ 1.980,00' },
 ];
 
 export const abastecimentos = [

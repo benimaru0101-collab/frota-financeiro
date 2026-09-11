@@ -12,10 +12,11 @@ function formatarValor(texto) {
 }
 
 export default function NovaViagemScreen({ navigation }) {
-  const { addViagem, veiculos } = useData();
+  const { addViagem, veiculos, motoristas } = useData();
   const [origem, setOrigem] = useState('');
   const [destino, setDestino] = useState('');
   const [placa, setPlaca] = useState(veiculos[0]?.placa ?? '');
+  const [motorista, setMotorista] = useState(motoristas[0]?.nome ?? '');
   const [data, setData] = useState('');
   const [valor, setValor] = useState('');
 
@@ -27,6 +28,7 @@ export default function NovaViagemScreen({ navigation }) {
     addViagem({
       origemDestino: `${origem.trim()} - ${destino.trim()}`,
       placa,
+      motorista: motorista || 'Não informado',
       data: data.trim() || new Date().toLocaleDateString('pt-BR'),
       valor: formatarValor(valor) || 'R$ 0,00',
     });
@@ -51,6 +53,13 @@ export default function NovaViagemScreen({ navigation }) {
           <ChipSelect options={veiculos.map((v) => v.placa)} value={placa} onChange={setPlaca} />
         ) : (
           <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>Cadastre um veículo primeiro.</Text>
+        )}
+
+        <Label>Motorista</Label>
+        {motoristas.length > 0 ? (
+          <ChipSelect options={motoristas.map((m) => m.nome)} value={motorista} onChange={setMotorista} />
+        ) : (
+          <Text style={{ color: colors.textMuted, marginBottom: spacing.md }}>Cadastre um motorista primeiro.</Text>
         )}
 
         <Label>Data</Label>

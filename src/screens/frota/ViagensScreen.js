@@ -8,7 +8,10 @@ export default function ViagensScreen({ navigation }) {
   const { viagens, deleteViagem } = useData();
   const [busca, setBusca] = React.useState('');
   const filtradas = viagens.filter(
-    (v) => v.origemDestino.toLowerCase().includes(busca.toLowerCase()) || v.placa.toLowerCase().includes(busca.toLowerCase())
+    (v) =>
+      v.origemDestino.toLowerCase().includes(busca.toLowerCase()) ||
+      v.placa.toLowerCase().includes(busca.toLowerCase()) ||
+      (v.motorista ?? '').toLowerCase().includes(busca.toLowerCase())
   );
 
   function confirmarExclusao(item) {
@@ -33,6 +36,7 @@ export default function ViagensScreen({ navigation }) {
           <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
             <Card style={styles.item}>
               <Text style={styles.rota}>{item.origemDestino}</Text>
+              <Text style={styles.motorista}>{item.motorista ?? 'Motorista não informado'}</Text>
               <View style={styles.linha}>
                 <Text style={styles.meta}>{item.placa} · {item.data}</Text>
                 <Text style={styles.valor}>{item.valor}</Text>
@@ -49,6 +53,7 @@ export default function ViagensScreen({ navigation }) {
 const styles = StyleSheet.create({
   item: { marginTop: spacing.md },
   rota: { color: colors.text, fontWeight: '600', fontSize: 15 },
+  motorista: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   linha: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.xs },
   meta: { color: colors.textMuted, fontSize: 12 },
   valor: { color: colors.success, fontWeight: '700' },
