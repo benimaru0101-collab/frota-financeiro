@@ -23,9 +23,13 @@ import EditarVeiculoScreen from '../screens/frota/EditarVeiculoScreen';
 import NovoMotoristaScreen from '../screens/frota/NovoMotoristaScreen';
 import EditarMotoristaScreen from '../screens/frota/EditarMotoristaScreen';
 import NovaViagemScreen from '../screens/frota/NovaViagemScreen';
+import EditarViagemScreen from '../screens/frota/EditarViagemScreen';
 import NovoAbastecimentoScreen from '../screens/frota/NovoAbastecimentoScreen';
+import EditarAbastecimentoScreen from '../screens/frota/EditarAbastecimentoScreen';
 import NovaManutencaoScreen from '../screens/frota/NovaManutencaoScreen';
+import EditarManutencaoScreen from '../screens/frota/EditarManutencaoScreen';
 import NovoDocumentoScreen from '../screens/frota/NovoDocumentoScreen';
+import EditarDocumentoScreen from '../screens/frota/EditarDocumentoScreen';
 
 import PerfilScreen from '../screens/outros/PerfilScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
@@ -69,9 +73,13 @@ function FrotaStackNavigator() {
       <FrotaStack.Screen name="NovoMotorista" component={NovoMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="EditarMotorista" component={EditarMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaViagem" component={NovaViagemScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarViagem" component={EditarViagemScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoAbastecimento" component={NovoAbastecimentoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarAbastecimento" component={EditarAbastecimentoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaManutencao" component={NovaManutencaoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarManutencao" component={EditarManutencaoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoDocumento" component={NovoDocumentoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarDocumento" component={EditarDocumentoScreen} options={{ presentation: 'modal' }} />
     </FrotaStack.Navigator>
   );
 }

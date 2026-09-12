@@ -39,14 +39,15 @@ dispositivo via AsyncStorage — ainda não ligados ao Supabase):
       partir das receitas/despesas cadastradas)
 - [x] Editar perfil e alterar senha (via Supabase Auth)
 - [x] Persistir preferências de Configurações no dispositivo
+- [x] Editar viagens/abastecimentos/manutenções/documentos (telas de
+      edição iguais em espírito à de veículos, com toque no item para
+      editar e toque-e-segure para excluir)
 
 Ainda pendente:
 
 - [ ] Ligar todas as telas ao Supabase de verdade (hoje usam estado
       local — trocar cada `add*/update*/delete*` do `DataContext` por
       chamadas `supabase.from(...)`)
-- [ ] Editar viagens/abastecimentos/manutenções/documentos (hoje só
-      criam e excluem; falta uma tela de edição como a de veículos)
 - [ ] Upload de documentos (Supabase Storage)
 - [ ] Notificações de vencimento de documentos/manutenções
 - [ ] Testar o login com SSO Google e a persistência de sessão em um

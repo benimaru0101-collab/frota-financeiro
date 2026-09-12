@@ -22,7 +22,7 @@ export default function DocumentosScreen({ navigation }) {
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Documentos</Title>
-        <Subtitle>Toque e segure para excluir</Subtitle>
+        <Subtitle>Toque para editar · toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar documento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -30,7 +30,10 @@ export default function DocumentosScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditarDocumento', { documento: item })}
+            onLongPress={() => confirmarExclusao(item)}
+          >
             <Card style={styles.item}>
               <Text style={styles.tipo}>📄 {item.tipo}</Text>
               <View>

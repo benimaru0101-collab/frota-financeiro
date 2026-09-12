@@ -98,15 +98,19 @@ export function DataProvider({ children }) {
   const deleteMotorista = (id) => removerPorId(setMotoristas, id);
 
   const addViagem = (item) => setViagens((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const updateViagem = (id, alteracoes) => updatePorId(setViagens, id, alteracoes);
   const deleteViagem = (id) => removerPorId(setViagens, id);
 
   const addAbastecimento = (item) => setAbastecimentos((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const updateAbastecimento = (id, alteracoes) => updatePorId(setAbastecimentos, id, alteracoes);
   const deleteAbastecimento = (id) => removerPorId(setAbastecimentos, id);
 
   const addManutencao = (item) => setManutencoes((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const updateManutencao = (id, alteracoes) => updatePorId(setManutencoes, id, alteracoes);
   const deleteManutencao = (id) => removerPorId(setManutencoes, id);
 
   const addDocumento = (item) => setDocumentos((atual) => [{ id: gerarId(), ...item }, ...atual]);
+  const updateDocumento = (id, alteracoes) => updatePorId(setDocumentos, id, alteracoes);
   const deleteDocumento = (id) => removerPorId(setDocumentos, id);
 
   const addReceita = (item) => setReceitas((atual) => [{ id: gerarId(), ...item }, ...atual]);
@@ -134,10 +138,10 @@ export function DataProvider({ children }) {
     resumo,
     veiculos, addVeiculo, updateVeiculo, deleteVeiculo,
     motoristas, addMotorista, updateMotorista, deleteMotorista,
-    viagens, addViagem, deleteViagem,
-    abastecimentos, addAbastecimento, deleteAbastecimento,
-    manutencoes, addManutencao, deleteManutencao,
-    documentos, addDocumento, deleteDocumento,
+    viagens, addViagem, updateViagem, deleteViagem,
+    abastecimentos, addAbastecimento, updateAbastecimento, deleteAbastecimento,
+    manutencoes, addManutencao, updateManutencao, deleteManutencao,
+    documentos, addDocumento, updateDocumento, deleteDocumento,
     receitas, addReceita, deleteReceita,
     despesas, addDespesa, deleteDespesa,
   };

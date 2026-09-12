@@ -25,7 +25,7 @@ export default function ViagensScreen({ navigation }) {
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Viagens</Title>
-        <Subtitle>Toque e segure para excluir</Subtitle>
+        <Subtitle>Toque para editar · toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar viagem" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -33,7 +33,10 @@ export default function ViagensScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditarViagem', { viagem: item })}
+            onLongPress={() => confirmarExclusao(item)}
+          >
             <Card style={styles.item}>
               <Text style={styles.rota}>{item.origemDestino}</Text>
               <Text style={styles.motorista}>{item.motorista ?? 'Motorista não informado'}</Text>

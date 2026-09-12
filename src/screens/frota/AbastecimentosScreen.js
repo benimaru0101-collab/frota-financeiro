@@ -20,7 +20,7 @@ export default function AbastecimentosScreen({ navigation }) {
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Abastecimentos</Title>
-        <Subtitle>Toque e segure para excluir</Subtitle>
+        <Subtitle>Toque para editar · toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar abastecimento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -28,7 +28,10 @@ export default function AbastecimentosScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditarAbastecimento', { abastecimento: item })}
+            onLongPress={() => confirmarExclusao(item)}
+          >
             <Card style={styles.item}>
               <View>
                 <Text style={styles.placa}>{item.placa}</Text>
