@@ -8,6 +8,25 @@ WebBrowser.maybeCompleteAuthSession();
 
 const AuthContext = createContext(null);
 
+// Lê os parâmetros (?code=... ou #access_token=...) da URL de retorno
+// do login. Substitui AuthSession.QueryParams.getQueryParams, que foi
+// removido em versões mais novas do expo-auth-session.
+function extrairParametrosDaUrl(url) {
+  const indiceQuery = url.indexOf('?');
+  const indiceFragmento = url.indexOf('#');
+  let inicio = -1;
+  if (indiceQuery !== -1) inicio = indiceQuery;
+  else if (indiceFragmento !== -1) inicio = indiceFragmento;
+  if (inicio === -1) return {};
+
+  const trecho = url.slice(inicio + 1);
+  const params = {};
+  new URLSearchParams(trecho).forEach((value, key) => {
+    params[key] = value;
+  });
+  return params;
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,10 +35,18 @@ export function AuthProvider({ children }) {
     // Ao abrir o app, o Supabase tenta restaurar a sessão salva
     // localmente (AsyncStorage). É essa checagem que comprova a
     // persistência de sessão pedida na atividade.
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setLoading(false);
+      })
+      .catch((error) => {
+        // Evita ficar travado na tela de loading para sempre caso a
+        // checagem de sessão falhe (ex: sem internet, credenciais
+        // erradas no app.json/.env).
+        console.warn('Erro ao restaurar sessão:', error?.message);
+        setLoading(false);
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
@@ -49,10 +76,17 @@ export function AuthProvider({ children }) {
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
     if (result.type === 'success' && result.url) {
-      const { params, errorCode } = AuthSession.QueryParams.getQueryParams(result.url);
-      if (errorCode) throw new Error(errorCode);
+      const params = extrairParametrosDaUrl(result.url);
+      if (params.error) throw new Error(params.error_description || params.error);
 
-      if (params.access_token && params.refresh_token) {
+      if (params.code) {
+        // Fluxo padrão do supabase-js v2 (PKCE): a URL de volta traz
+        // ?code=..., que precisa ser trocado por uma sessão.
+        const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(params.code);
+        if (sessionError) throw sessionError;
+        setSession(sessionData.session);
+      } else if (params.access_token && params.refresh_token) {
+        // Fallback para fluxo implícito (caso o projeto use flowType diferente).
         const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
           access_token: params.access_token,
           refresh_token: params.refresh_token,
