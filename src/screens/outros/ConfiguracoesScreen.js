@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Switch, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Screen, Card, Title, PrimaryButton } from '../../components/UI';
+import { useData } from '../../contexts/DataContext';
+import { reagendarNotificacoesVencimento, cancelarNotificacoesVencimento } from '../../lib/notifications';
 import { colors, spacing } from '../../theme/colors';
 
 const STORAGE_KEY = '@frota_financeiro/preferencias_v1';
@@ -13,6 +15,7 @@ const PADRAO = {
 };
 
 export default function ConfiguracoesScreen() {
+  const { documentos } = useData();
   const [notificacoes, setNotificacoes] = useState(PADRAO.notificacoes);
   const [alertasManutencao, setAlertasManutencao] = useState(PADRAO.alertasManutencao);
   const [modoEscuro, setModoEscuro] = useState(PADRAO.modoEscuro);
@@ -42,6 +45,11 @@ export default function ConfiguracoesScreen() {
         STORAGE_KEY,
         JSON.stringify({ notificacoes, alertasManutencao, modoEscuro })
       );
+      if (notificacoes) {
+        await reagendarNotificacoesVencimento(documentos);
+      } else {
+        await cancelarNotificacoesVencimento();
+      }
       Alert.alert('Preferências salvas');
     } catch (erro) {
       Alert.alert('Não foi possível salvar as preferências', String(erro));

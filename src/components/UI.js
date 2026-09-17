@@ -92,6 +92,50 @@ export function ChipSelect({ options, value, onChange }) {
   );
 }
 
+export function FilterTabs({ options, value, onChange }) {
+  return (
+    <View style={styles.filterTabsRow}>
+      {options.map((opt) => {
+        const selected = opt === value;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={[styles.filterTab, selected && styles.filterTabSelected]}
+          >
+            <Text style={[styles.filterTabText, selected && styles.filterTabTextSelected]}>{opt}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+export function ColorSwatchSelect({ options, value, onChange }) {
+  return (
+    <View style={styles.swatchRow}>
+      {options.map((cor) => {
+        const selected = cor === value;
+        return (
+          <TouchableOpacity
+            key={cor}
+            onPress={() => onChange(cor)}
+            style={[styles.swatch, { backgroundColor: cor }, selected && styles.swatchSelected]}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+export function IconButton({ icon = '+', onPress, style }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={[styles.iconButton, style]}>
+      <Text style={styles.iconButtonText}>{icon}</Text>
+    </TouchableOpacity>
+  );
+}
+
 export function StatPill({ label, value, positive }) {
   return (
     <View style={styles.statPill}>
@@ -220,5 +264,62 @@ const styles = StyleSheet.create({
   chipOptionTextSelected: {
     color: colors.darkText,
     fontWeight: '700',
+  },
+  filterTabsRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 4,
+    marginTop: spacing.md,
+  },
+  filterTab: {
+    flex: 1,
+    borderRadius: radius.sm - 2,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  filterTabSelected: {
+    backgroundColor: colors.primary,
+  },
+  filterTabText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterTabTextSelected: {
+    color: colors.darkText,
+  },
+  swatchRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: spacing.md,
+  },
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  swatchSelected: {
+    borderColor: colors.text,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonText: {
+    color: colors.darkText,
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 20,
   },
 });

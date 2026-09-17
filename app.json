@@ -18,6 +18,15 @@
     "ios": {
       "bundleIdentifier": "com.tempesta.frotafinanceiro"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para anexar documentos.",
+          "cameraPermission": "O app precisa da câmera para fotografar documentos."
+        }
+      ]
+    ],
     "extra": {
       "supabaseUrl": "SUA_SUPABASE_URL_AQUI",
       "supabaseAnonKey": "SUA_SUPABASE_ANON_KEY_AQUI",

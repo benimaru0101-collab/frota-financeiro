@@ -22,7 +22,7 @@ export default function ManutencoesScreen({ navigation }) {
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Manutenções</Title>
-        <Subtitle>Toque e segure para excluir</Subtitle>
+        <Subtitle>Toque para editar · toque e segure para excluir</Subtitle>
       </View>
       <Input placeholder="Buscar manutenção" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
@@ -30,7 +30,10 @@ export default function ManutencoesScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}
         renderItem={({ item }) => (
-          <TouchableOpacity onLongPress={() => confirmarExclusao(item)}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditarManutencao', { manutencao: item })}
+            onLongPress={() => confirmarExclusao(item)}
+          >
             <Card style={styles.item}>
               <View>
                 <Text style={styles.placa}>{item.placa}</Text>

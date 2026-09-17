@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Subtitle } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
+import { documentosVencendo } from '../utils/vencimentos';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const { resumo: dashboardResumo } = useData();
+  const { resumo: dashboardResumo, documentos } = useData();
   const primeiroNome = (user?.user_metadata?.full_name || user?.email || 'Juliano').split(' ')[0];
+  const avisos = documentosVencendo(documentos, 30);
 
   return (
     <Screen>
@@ -39,12 +41,42 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.metricValue}>{dashboardResumo.veiculosAtivos}</Text>
         </Card>
 
+        {avisos.length > 0 && (
+          <View style={{ marginTop: spacing.lg }}>
+            <Text style={styles.sectionTitle}>Avisos de vencimento</Text>
+            {avisos.slice(0, 5).map((doc) => (
+              <TouchableOpacity
+                key={doc.id}
+                onPress={() => navigation.navigate('Frota', { screen: 'Documentos' })}
+              >
+                <Card style={styles.avisoCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.avisoTitulo}>{doc.tipo} — {doc.placa}</Text>
+                    <Text style={styles.avisoData}>Vence em {doc.vencimento}</Text>
+                  </View>
+                  <Text style={[styles.avisoDias, { color: doc.diasRestantes < 0 ? colors.danger : colors.primary }]}>
+                    {doc.diasRestantes < 0
+                      ? `${Math.abs(doc.diasRestantes)}d atrasado`
+                      : doc.diasRestantes === 0
+                      ? 'Hoje'
+                      : `${doc.diasRestantes}d`}
+                  </Text>
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         <View style={{ marginTop: spacing.lg }}>
           <Text style={styles.sectionTitle}>Acesso rápido</Text>
           <View style={styles.quickRow}>
             <QuickAction label="Financeiro" icon="💰" onPress={() => navigation.navigate('Financeiro')} />
             <QuickAction label="Frota" icon="🚚" onPress={() => navigation.navigate('Frota')} />
-            <QuickAction label="Relatórios" icon="📊" onPress={() => {}} />
+            <QuickAction
+              label="Relatórios"
+              icon="📊"
+              onPress={() => navigation.navigate('Financeiro', { screen: 'Relatorios' })}
+            />
           </View>
         </View>
       </ScrollView>
@@ -54,16 +86,22 @@ export default function DashboardScreen({ navigation }) {
 
 function QuickAction({ label, icon, onPress }) {
   return (
-    <View style={styles.quickAction}>
+    <TouchableOpacity style={styles.quickAction} onPress={onPress}>
       <Text style={{ fontSize: 22 }}>{icon}</Text>
       <Text style={styles.quickActionLabel}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   saldoLabel: { color: '#1A1A1A', fontSize: 13, fontWeight: '600' },
   saldoValor: { color: '#1A1A1A', fontSize: 28, fontWeight: '800', marginTop: spacing.xs },
+  avisoCard: {
+    marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  avisoTitulo: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  avisoData: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  avisoDias: { fontSize: 13, fontWeight: '700', marginLeft: spacing.sm },
   row: { flexDirection: 'row', marginTop: spacing.md },
   metade: { flex: 1 },
   metricLabel: { color: colors.textMuted, fontSize: 12 },

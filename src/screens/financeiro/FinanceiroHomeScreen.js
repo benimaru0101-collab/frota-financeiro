@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function FinanceiroHomeScreen({ navigation }) {
-  const { resumo } = useData();
+  const { resumo, contas, categorias } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
@@ -29,6 +29,24 @@ export default function FinanceiroHomeScreen({ navigation }) {
         valor="Ver gráfico"
         cor={colors.info}
         onPress={() => navigation.navigate('FluxoDeCaixa')}
+      />
+      <MenuItem
+        label="Contas"
+        valor={`${contas.length} conta${contas.length === 1 ? '' : 's'}`}
+        cor={colors.text}
+        onPress={() => navigation.navigate('Contas')}
+      />
+      <MenuItem
+        label="Categorias"
+        valor={`${categorias.length} categoria${categorias.length === 1 ? '' : 's'}`}
+        cor={colors.text}
+        onPress={() => navigation.navigate('Categorias')}
+      />
+      <MenuItem
+        label="Relatórios"
+        valor="Ver relatórios"
+        cor={colors.info}
+        onPress={() => navigation.navigate('Relatorios')}
       />
     </Screen>
   );

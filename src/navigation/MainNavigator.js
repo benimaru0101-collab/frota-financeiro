@@ -10,6 +10,15 @@ import DespesasScreen from '../screens/financeiro/DespesasScreen';
 import FluxoDeCaixaScreen from '../screens/financeiro/FluxoDeCaixaScreen';
 import NovaReceitaScreen from '../screens/financeiro/NovaReceitaScreen';
 import NovaDespesaScreen from '../screens/financeiro/NovaDespesaScreen';
+import ContasScreen from '../screens/financeiro/ContasScreen';
+import NovaContaScreen from '../screens/financeiro/NovaContaScreen';
+import EditarContaScreen from '../screens/financeiro/EditarContaScreen';
+import CategoriasScreen from '../screens/financeiro/CategoriasScreen';
+import NovaCategoriaScreen from '../screens/financeiro/NovaCategoriaScreen';
+import EditarCategoriaScreen from '../screens/financeiro/EditarCategoriaScreen';
+import RelatoriosScreen from '../screens/financeiro/RelatoriosScreen';
+import RelatorioDetalhadoScreen from '../screens/financeiro/RelatorioDetalhadoScreen';
+import FiltrosRelatorioScreen from '../screens/financeiro/FiltrosRelatorioScreen';
 
 import FrotaHomeScreen from '../screens/frota/FrotaHomeScreen';
 import VeiculoDetalhesScreen from '../screens/frota/VeiculoDetalhesScreen';
@@ -23,9 +32,13 @@ import EditarVeiculoScreen from '../screens/frota/EditarVeiculoScreen';
 import NovoMotoristaScreen from '../screens/frota/NovoMotoristaScreen';
 import EditarMotoristaScreen from '../screens/frota/EditarMotoristaScreen';
 import NovaViagemScreen from '../screens/frota/NovaViagemScreen';
+import EditarViagemScreen from '../screens/frota/EditarViagemScreen';
 import NovoAbastecimentoScreen from '../screens/frota/NovoAbastecimentoScreen';
+import EditarAbastecimentoScreen from '../screens/frota/EditarAbastecimentoScreen';
 import NovaManutencaoScreen from '../screens/frota/NovaManutencaoScreen';
+import EditarManutencaoScreen from '../screens/frota/EditarManutencaoScreen';
 import NovoDocumentoScreen from '../screens/frota/NovoDocumentoScreen';
+import EditarDocumentoScreen from '../screens/frota/EditarDocumentoScreen';
 
 import PerfilScreen from '../screens/outros/PerfilScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
@@ -50,6 +63,15 @@ function FinanceiroStackNavigator() {
       <FinanceiroStack.Screen name="FluxoDeCaixa" component={FluxoDeCaixaScreen} />
       <FinanceiroStack.Screen name="NovaReceita" component={NovaReceitaScreen} options={{ presentation: 'modal' }} />
       <FinanceiroStack.Screen name="NovaDespesa" component={NovaDespesaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="Contas" component={ContasScreen} />
+      <FinanceiroStack.Screen name="NovaConta" component={NovaContaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="EditarConta" component={EditarContaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="Categorias" component={CategoriasScreen} />
+      <FinanceiroStack.Screen name="NovaCategoria" component={NovaCategoriaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="EditarCategoria" component={EditarCategoriaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="Relatorios" component={RelatoriosScreen} />
+      <FinanceiroStack.Screen name="RelatorioDetalhado" component={RelatorioDetalhadoScreen} />
+      <FinanceiroStack.Screen name="FiltrosRelatorio" component={FiltrosRelatorioScreen} options={{ presentation: 'modal' }} />
     </FinanceiroStack.Navigator>
   );
 }
@@ -69,9 +91,13 @@ function FrotaStackNavigator() {
       <FrotaStack.Screen name="NovoMotorista" component={NovoMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="EditarMotorista" component={EditarMotoristaScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaViagem" component={NovaViagemScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarViagem" component={EditarViagemScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoAbastecimento" component={NovoAbastecimentoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarAbastecimento" component={EditarAbastecimentoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovaManutencao" component={NovaManutencaoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarManutencao" component={EditarManutencaoScreen} options={{ presentation: 'modal' }} />
       <FrotaStack.Screen name="NovoDocumento" component={NovoDocumentoScreen} options={{ presentation: 'modal' }} />
+      <FrotaStack.Screen name="EditarDocumento" component={EditarDocumentoScreen} options={{ presentation: 'modal' }} />
     </FrotaStack.Navigator>
   );
 }
