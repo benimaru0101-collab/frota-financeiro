@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, StatPill, FilterTabs } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, StatPill, FilterTabs, DonutChart, LineChart } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { agruparPorMes } from '../../utils/data';
 import { formatValorBR, parseValorBR } from '../../utils/money';
@@ -38,7 +38,6 @@ export default function RelatoriosScreen({ route, navigation }) {
   );
 
   const meses = useMemo(() => agruparPorMes(receitasFiltradas, despesasFiltradas), [receitasFiltradas, despesasFiltradas]);
-  const maxMes = useMemo(() => Math.max(1, ...meses.flatMap((m) => [m.receitas, m.despesas])), [meses]);
 
   return (
     <Screen>
@@ -74,21 +73,18 @@ export default function RelatoriosScreen({ route, navigation }) {
         <Text style={styles.sectionTitle}>Despesas por categoria</Text>
         <Card>
           {porCategoria.length > 0 ? (
-            <>
-              <View style={styles.barraSegmentada}>
+            <View style={styles.donutRow}>
+              <DonutChart segments={porCategoria} />
+              <View style={styles.legendaColuna}>
                 {porCategoria.map((c) => (
-                  <View key={c.nome} style={{ flex: Math.max(c.percentual, 2), backgroundColor: c.cor }} />
+                  <View key={c.nome} style={styles.legendaLinha}>
+                    <View style={[styles.legendaBolinha, { backgroundColor: c.cor }]} />
+                    <Text style={styles.legendaNome} numberOfLines={1}>{c.nome}</Text>
+                    <Text style={styles.legendaPercentual}>{c.percentual.toFixed(0)}%</Text>
+                  </View>
                 ))}
               </View>
-              {porCategoria.map((c) => (
-                <View key={c.nome} style={styles.legendaLinha}>
-                  <View style={[styles.legendaBolinha, { backgroundColor: c.cor }]} />
-                  <Text style={styles.legendaNome}>{c.nome}</Text>
-                  <Text style={styles.legendaPercentual}>{c.percentual.toFixed(0)}%</Text>
-                  <Text style={styles.legendaValor}>{formatValorBR(c.valor)}</Text>
-                </View>
-              ))}
-            </>
+            </View>
           ) : (
             <Text style={styles.vazio}>Nenhuma despesa no período selecionado.</Text>
           )}
@@ -97,19 +93,36 @@ export default function RelatoriosScreen({ route, navigation }) {
         <Text style={styles.sectionTitle}>Evolução mensal</Text>
         <Card>
           {meses.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.chart}>
-                {meses.map((mes) => (
-                  <View key={mes.chave} style={styles.grupoMes}>
-                    <View style={styles.barrasMes}>
-                      <View style={[styles.bar, { backgroundColor: colors.success, height: `${(mes.receitas / maxMes) * 100}%` }]} />
-                      <View style={[styles.bar, { backgroundColor: colors.danger, height: `${(mes.despesas / maxMes) * 100}%` }]} />
-                    </View>
-                    <Text style={styles.mesLabel}>{mes.label}</Text>
-                  </View>
-                ))}
+            <>
+              <View style={styles.legendaLinhas}>
+                <View style={styles.legendaLinhaItem}>
+                  <View style={[styles.legendaBolinha, { backgroundColor: colors.success }]} />
+                  <Text style={styles.legendaNome}>Receitas</Text>
+                </View>
+                <View style={styles.legendaLinhaItem}>
+                  <View style={[styles.legendaBolinha, { backgroundColor: colors.danger }]} />
+                  <Text style={styles.legendaNome}>Despesas</Text>
+                </View>
               </View>
-            </ScrollView>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View>
+                  <LineChart
+                    count={meses.length}
+                    series={[
+                      { dados: meses.map((m) => m.receitas), cor: colors.success },
+                      { dados: meses.map((m) => m.despesas), cor: colors.danger },
+                    ]}
+                  />
+                  <View style={styles.chart}>
+                    {meses.map((mes) => (
+                      <View key={mes.chave} style={styles.grupoMes}>
+                        <Text style={styles.mesLabel}>{mes.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
+            </>
           ) : (
             <Text style={styles.vazio}>Sem lançamentos no período selecionado.</Text>
           )}
@@ -135,17 +148,18 @@ const styles = StyleSheet.create({
   filtrosBotaoTexto: { color: colors.text, fontSize: 13, fontWeight: '600' },
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginTop: spacing.lg, marginBottom: spacing.sm },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  barraSegmentada: { flexDirection: 'row', height: 14, borderRadius: 7, overflow: 'hidden', marginBottom: spacing.md },
+  donutRow: { flexDirection: 'row', alignItems: 'center' },
+  legendaColuna: { flex: 1, marginLeft: spacing.lg },
   legendaLinha: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+  legendaLinhas: { flexDirection: 'row', marginBottom: spacing.md },
+  legendaLinhaItem: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.lg },
   legendaBolinha: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.sm },
   legendaNome: { color: colors.text, fontSize: 13, flex: 1 },
   legendaPercentual: { color: colors.textMuted, fontSize: 12, marginRight: spacing.sm },
   legendaValor: { color: colors.text, fontSize: 13, fontWeight: '600' },
   vazio: { color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.lg },
-  chart: { flexDirection: 'row', alignItems: 'flex-end', height: 150, paddingHorizontal: spacing.xs },
-  grupoMes: { alignItems: 'center', marginRight: spacing.lg },
-  barrasMes: { flexDirection: 'row', alignItems: 'flex-end', height: 130 },
-  bar: { width: 14, borderRadius: 4, marginHorizontal: 2 },
+  chart: { flexDirection: 'row', paddingHorizontal: spacing.xs },
+  grupoMes: { width: 56, alignItems: 'center' },
   mesLabel: { color: colors.textMuted, fontSize: 11, marginTop: spacing.xs },
   detalhadoBotao: {
     marginTop: spacing.lg, backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 14, alignItems: 'center',

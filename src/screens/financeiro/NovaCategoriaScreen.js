@@ -38,10 +38,10 @@ export default function NovaCategoriaScreen({ navigation }) {
       </View>
 
       <View style={{ marginTop: spacing.xl }}>
-        <Label>Nome</Label>
-        <Input placeholder="Ex.: Combustível, Pedágio" value={nome} onChangeText={setNome} />
         <Label>Tipo</Label>
         <ChipSelect options={TIPOS.map((t) => t.label)} value={tipoLabel} onChange={setTipoLabel} />
+        <Label>Nome da categoria</Label>
+        <Input placeholder="Ex.: Combustível, Pedágio" value={nome} onChangeText={setNome} />
         <Label>Ícone</Label>
         <ChipSelect options={ICONES} value={icone} onChange={setIcone} />
         <Label>Cor</Label>

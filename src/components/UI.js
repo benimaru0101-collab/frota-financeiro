@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Polyline } from 'react-native-svg';
 import { colors, spacing, radius } from '../theme/colors';
 
 export function Screen({ children, style }) {
@@ -133,6 +134,70 @@ export function IconButton({ icon = '+', onPress, style }) {
     <TouchableOpacity onPress={onPress} style={[styles.iconButton, style]}>
       <Text style={styles.iconButtonText}>{icon}</Text>
     </TouchableOpacity>
+  );
+}
+
+// Gráfico de rosca (donut) sem biblioteca de charts: cada fatia é um
+// círculo de raio igual com stroke-dasharray proporcional ao seu
+// percentual, empilhados uns sobre os outros. `segments` é uma lista
+// de { percentual, cor }.
+export function DonutChart({ segments, size = 150, strokeWidth = 24 }) {
+  const center = size / 2;
+  const raio = center - strokeWidth / 2;
+  const circunferencia = 2 * Math.PI * raio;
+  let acumulado = 0;
+
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={center} cy={center} r={raio} stroke={colors.surfaceAlt} strokeWidth={strokeWidth} fill="none" />
+      {segments.map((seg, i) => {
+        const comprimento = Math.max((seg.percentual / 100) * circunferencia - 2, 0);
+        const offset = -((acumulado / 100) * circunferencia);
+        acumulado += seg.percentual;
+        return (
+          <Circle
+            key={i}
+            cx={center}
+            cy={center}
+            r={raio}
+            stroke={seg.cor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${comprimento} ${circunferencia - comprimento}`}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            fill="none"
+            rotation="-90"
+            origin={`${center}, ${center}`}
+          />
+        );
+      })}
+    </Svg>
+  );
+}
+
+// Gráfico de linhas simples (sem biblioteca de charts): recebe até
+// duas séries numéricas do mesmo tamanho e desenha uma polyline para
+// cada uma, escalando pelo maior valor entre as duas.
+export function LineChart({ series, count, height = 130, columnWidth = 56 }) {
+  const width = Math.max(count * columnWidth, columnWidth);
+  const maximo = Math.max(1, ...series.flatMap((s) => s.dados));
+  const pontoX = (i) => i * columnWidth + columnWidth / 2;
+  const pontoY = (v) => height - (v / maximo) * (height - 12) - 4;
+
+  return (
+    <Svg width={width} height={height}>
+      {series.map((s, si) => {
+        const pontos = s.dados.map((v, i) => `${pontoX(i)},${pontoY(v)}`).join(' ');
+        return (
+          <React.Fragment key={si}>
+            <Polyline points={pontos} fill="none" stroke={s.cor} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+            {s.dados.map((v, i) => (
+              <Circle key={i} cx={pontoX(i)} cy={pontoY(v)} r={3.5} fill={s.cor} />
+            ))}
+          </React.Fragment>
+        );
+      })}
+    </Svg>
   );
 }
 

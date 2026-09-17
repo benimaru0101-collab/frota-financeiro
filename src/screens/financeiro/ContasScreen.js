@@ -6,6 +6,14 @@ import { colors, spacing } from '../../theme/colors';
 
 const ABAS = ['Todas', 'Bancárias', 'Caixa'];
 
+function iconeConta(tipo) {
+  return tipo === 'Bancária' ? '🏦' : '💵';
+}
+
+function corConta(tipo) {
+  return tipo === 'Bancária' ? colors.info : colors.primary;
+}
+
 export default function ContasScreen({ navigation }) {
   const { contas, deleteConta } = useData();
   const [busca, setBusca] = React.useState('');
@@ -45,7 +53,10 @@ export default function ContasScreen({ navigation }) {
             onLongPress={() => confirmarExclusao(item)}
           >
             <Card style={styles.item}>
-              <View style={{ flex: 1 }}>
+              <View style={[styles.iconeCirculo, { backgroundColor: corConta(item.tipo) }]}>
+                <Text style={styles.iconeTexto}>{iconeConta(item.tipo)}</Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <Text style={styles.nome}>{item.nome}</Text>
                 <Text style={styles.subtitulo}>{item.banco || item.descricao || item.tipo}</Text>
               </View>
@@ -65,7 +76,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  item: { marginTop: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  item: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center' },
+  iconeCirculo: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  iconeTexto: { fontSize: 18 },
   nome: { color: colors.text, fontSize: 16, fontWeight: '600' },
   subtitulo: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   saldo: { color: colors.text, fontWeight: '700', marginLeft: spacing.sm },

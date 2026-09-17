@@ -79,10 +79,11 @@ export function filtrarLancamentos({ receitas, despesas }, filtros) {
 }
 
 // Agrupa despesas por nome de categoria, somando os valores e
-// calculando o percentual do total — usado no gráfico "Despesas por
-// categoria" (barra segmentada, já que o app não usa biblioteca de
-// gráficos). A cor vem da categoria cadastrada (campo `cor`), com uma
-// paleta padrão de reserva para categorias antigas sem cor definida.
+// calculando o percentual do total — usado no gráfico de rosca
+// "Despesas por categoria" (SVG puro via react-native-svg, sem
+// biblioteca de charts). A cor vem da categoria cadastrada (campo
+// `cor`), com uma paleta padrão de reserva para categorias antigas
+// sem cor definida.
 export function agruparDespesasPorCategoria(despesas, categorias) {
   const mapa = new Map();
   despesas.forEach((d) => {
