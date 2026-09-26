@@ -71,10 +71,49 @@ Concluído:
 - [x] Corrigido: os atalhos de "Acesso rápido" no Dashboard
       (Financeiro/Frota/Relatórios) não respondiam ao toque
 
+## Núcleo Financeiro (atualização do enunciado — Parte 2)
+
+- [x] Status (Pendente / Pago-Recebido), data de pagamento, forma de
+      pagamento e comprovante (foto/galeria) em receitas e despesas
+      (migration-6). Formulários de Nova Receita/Despesa pedem o
+      status e só mostram forma de pagamento/comprovante quando já
+      está pago; lista permite marcar como pago/pendente e excluir
+      pelo toque-e-segure
+- [x] Validação de valor > 0 nos formulários de receita/despesa
+- [x] Motor de Saldo: `resumo.saldoAtual` agora só soma lançamentos
+      com status concluído — Dashboard mostra "Saldo Atual" (não mais
+      a soma de tudo, pendente incluído)
+- [x] Projeção de Caixa: lançamentos "Pendente" agrupados por mês de
+      vencimento, exibidos no Dashboard (card "Projeção de Caixa")
+- [x] Módulo de Dívidas e Financiamentos (migration-7): tabela
+      `dividas_financiamentos` + função `criar_divida_com_parcelas`
+      no Postgres, que gera a dívida e todas as parcelas (como
+      despesas "Pendente" vinculadas) dentro de uma transação — se
+      algo falhar no meio, tudo é desfeito automaticamente (rollback).
+      Telas "Dívidas e Financiamentos" (lista com progresso de
+      parcelas pagas) e "Nova Dívida/Financiamento"
+- [x] RBAC — Administrador × Motorista (migration-8): campo `role` em
+      `profiles` (criado automaticamente no primeiro login), aba
+      Financeiro escondida da navegação para quem é Motorista, e as
+      tabelas do Financeiro (receitas, despesas, contas, categorias,
+      dívidas) só ficam visíveis/editáveis por administrador — reforçado
+      também via RLS no banco, não só escondendo na tela
+      - Limitação conhecida: `motoristas` ainda não tem vínculo com
+        `auth.users`, então o Motorista vê a Frota inteira (não só as
+        próprias viagens) — fica pra uma próxima entrega
+
 Ainda pendente:
 
+- [ ] Rodar as migrations 6, 7 e 8 no Supabase de produção (SQL Editor,
+      nessa ordem) — sem isso o app quebra ao tentar ler/gravar os
+      campos novos
 - [ ] Testar o login com SSO Google e a persistência de sessão em um
       dispositivo/emulador real e anexar prints como evidência (Parte 2.6)
+- [ ] Gravar o vídeo demonstrativo do Núcleo Financeiro em
+      emulador/dispositivo Android real
+- [ ] Confirmar no GitHub que o repositório está público e que a
+      proteção da branch main (PR obrigatório + 1 aprovação) está
+      realmente ativa nas configurações do repositório
 
 > Membros do grupo: atribua cada cartão a um responsável e defina
 > etiquetas por módulo (Financeiro / Frota / Auth / Infra).

@@ -7,7 +7,7 @@ import { documentosVencendo } from '../utils/vencimentos';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { resumo: dashboardResumo, documentos } = useData();
   const primeiroNome = (user?.user_metadata?.full_name || user?.email || 'Juliano').split(' ')[0];
   const avisos = documentosVencendo(documentos, 30);
@@ -20,26 +20,48 @@ export default function DashboardScreen({ navigation }) {
           <Title>{primeiroNome}! 👋</Title>
         </View>
 
-        <Card style={{ marginTop: spacing.lg, backgroundColor: colors.primary, borderWidth: 0 }}>
-          <Text style={styles.saldoLabel}>Saldo Total</Text>
-          <Text style={styles.saldoValor}>{dashboardResumo.saldoTotal}</Text>
-        </Card>
+        {isAdmin && (
+          <>
+            <Card style={{ marginTop: spacing.lg, backgroundColor: colors.primary, borderWidth: 0 }}>
+              <Text style={styles.saldoLabel}>Saldo Atual</Text>
+              <Text style={styles.saldoValor}>{dashboardResumo.saldoAtual}</Text>
+              <Text style={styles.saldoNota}>Só considera lançamentos já pagos/recebidos</Text>
+            </Card>
 
-        <View style={styles.row}>
-          <Card style={styles.metade}>
-            <Text style={styles.metricLabel}>Receitas do Mês</Text>
-            <Text style={[styles.metricValue, { color: colors.success }]}>{dashboardResumo.receitasMes}</Text>
-          </Card>
-          <Card style={[styles.metade, { marginLeft: spacing.md }]}>
-            <Text style={styles.metricLabel}>Despesas do Mês</Text>
-            <Text style={[styles.metricValue, { color: colors.danger }]}>{dashboardResumo.despesasMes}</Text>
-          </Card>
-        </View>
+            <View style={styles.row}>
+              <Card style={styles.metade}>
+                <Text style={styles.metricLabel}>Receitas do Mês</Text>
+                <Text style={[styles.metricValue, { color: colors.success }]}>{dashboardResumo.receitasMes}</Text>
+              </Card>
+              <Card style={[styles.metade, { marginLeft: spacing.md }]}>
+                <Text style={styles.metricLabel}>Despesas do Mês</Text>
+                <Text style={[styles.metricValue, { color: colors.danger }]}>{dashboardResumo.despesasMes}</Text>
+              </Card>
+            </View>
+          </>
+        )}
 
         <Card style={{ marginTop: spacing.md }}>
           <Text style={styles.metricLabel}>Veículos Ativos</Text>
           <Text style={styles.metricValue}>{dashboardResumo.veiculosAtivos}</Text>
         </Card>
+
+        {isAdmin && dashboardResumo.projecaoFutura.length > 0 && (
+          <View style={{ marginTop: spacing.lg }}>
+            <Text style={styles.sectionTitle}>Projeção de Caixa</Text>
+            <Text style={styles.projecaoSubtitulo}>Lançamentos pendentes, por mês previsto</Text>
+            {dashboardResumo.projecaoFutura.map((grupo) => (
+              <Card key={grupo.mes} style={styles.projecaoCard}>
+                <Text style={styles.projecaoMes}>{grupo.mes}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.xs }}>
+                  <Text style={styles.projecaoLinha}>A receber: <Text style={{ color: colors.success }}>{grupo.receitas}</Text></Text>
+                  <Text style={styles.projecaoLinha}>A pagar: <Text style={{ color: colors.danger }}>{grupo.despesas}</Text></Text>
+                </View>
+                <Text style={styles.projecaoSaldo}>Saldo projetado: {grupo.saldoProjetado}</Text>
+              </Card>
+            ))}
+          </View>
+        )}
 
         {avisos.length > 0 && (
           <View style={{ marginTop: spacing.lg }}>
@@ -70,13 +92,15 @@ export default function DashboardScreen({ navigation }) {
         <View style={{ marginTop: spacing.lg }}>
           <Text style={styles.sectionTitle}>Acesso rápido</Text>
           <View style={styles.quickRow}>
-            <QuickAction label="Financeiro" icon="💰" onPress={() => navigation.navigate('Financeiro')} />
+            {isAdmin && <QuickAction label="Financeiro" icon="💰" onPress={() => navigation.navigate('Financeiro')} />}
             <QuickAction label="Frota" icon="🚚" onPress={() => navigation.navigate('Frota')} />
-            <QuickAction
-              label="Relatórios"
-              icon="📊"
-              onPress={() => navigation.navigate('Financeiro', { screen: 'Relatorios' })}
-            />
+            {isAdmin && (
+              <QuickAction
+                label="Relatórios"
+                icon="📊"
+                onPress={() => navigation.navigate('Financeiro', { screen: 'Relatorios' })}
+              />
+            )}
           </View>
         </View>
       </ScrollView>
@@ -96,6 +120,12 @@ function QuickAction({ label, icon, onPress }) {
 const styles = StyleSheet.create({
   saldoLabel: { color: '#1A1A1A', fontSize: 13, fontWeight: '600' },
   saldoValor: { color: '#1A1A1A', fontSize: 28, fontWeight: '800', marginTop: spacing.xs },
+  saldoNota: { color: '#1A1A1A', opacity: 0.65, fontSize: 11, marginTop: spacing.xs },
+  projecaoSubtitulo: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm },
+  projecaoCard: { marginTop: spacing.sm },
+  projecaoMes: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  projecaoLinha: { color: colors.textMuted, fontSize: 12 },
+  projecaoSaldo: { color: colors.primary, fontSize: 12, fontWeight: '700', marginTop: spacing.xs },
   avisoCard: {
     marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },

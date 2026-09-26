@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DashboardScreen from '../screens/DashboardScreen';
+import { useAuth } from '../contexts/AuthContext';
 
 import FinanceiroHomeScreen from '../screens/financeiro/FinanceiroHomeScreen';
 import ReceitasScreen from '../screens/financeiro/ReceitasScreen';
@@ -19,6 +20,8 @@ import EditarCategoriaScreen from '../screens/financeiro/EditarCategoriaScreen';
 import RelatoriosScreen from '../screens/financeiro/RelatoriosScreen';
 import RelatorioDetalhadoScreen from '../screens/financeiro/RelatorioDetalhadoScreen';
 import FiltrosRelatorioScreen from '../screens/financeiro/FiltrosRelatorioScreen';
+import DividasScreen from '../screens/financeiro/DividasScreen';
+import NovaDividaScreen from '../screens/financeiro/NovaDividaScreen';
 
 import FrotaHomeScreen from '../screens/frota/FrotaHomeScreen';
 import VeiculoDetalhesScreen from '../screens/frota/VeiculoDetalhesScreen';
@@ -72,6 +75,8 @@ function FinanceiroStackNavigator() {
       <FinanceiroStack.Screen name="Relatorios" component={RelatoriosScreen} />
       <FinanceiroStack.Screen name="RelatorioDetalhado" component={RelatorioDetalhadoScreen} />
       <FinanceiroStack.Screen name="FiltrosRelatorio" component={FiltrosRelatorioScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="Dividas" component={DividasScreen} />
+      <FinanceiroStack.Screen name="NovaDivida" component={NovaDividaScreen} options={{ presentation: 'modal' }} />
     </FinanceiroStack.Navigator>
   );
 }
@@ -116,6 +121,13 @@ function MaisStackNavigator() {
 const ICONS = { Inicio: '🏠', Financeiro: '💰', Frota: '🚚', Mais: '⚙️' };
 
 export default function MainNavigator() {
+  // Controle de acesso (RBAC): a aba Financeiro só aparece pra quem
+  // tem role 'administrador' — o Motorista nem vê a aba na navegação.
+  // O banco (RLS, migration-8) bloqueia o mesmo acesso no nível de
+  // dados, então isso não é só "esconder botão": mesmo que alguém
+  // chame a API direto, os dados financeiros continuam protegidos.
+  const { isAdmin } = useAuth();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -127,7 +139,7 @@ export default function MainNavigator() {
       })}
     >
       <Tab.Screen name="Inicio" component={DashboardScreen} options={{ title: 'Início' }} />
-      <Tab.Screen name="Financeiro" component={FinanceiroStackNavigator} />
+      {isAdmin && <Tab.Screen name="Financeiro" component={FinanceiroStackNavigator} />}
       <Tab.Screen name="Frota" component={FrotaStackNavigator} />
       <Tab.Screen name="Mais" component={MaisStackNavigator} />
     </Tab.Navigator>

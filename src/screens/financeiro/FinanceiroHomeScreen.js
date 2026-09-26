@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function FinanceiroHomeScreen({ navigation }) {
-  const { resumo, contas, categorias } = useData();
+  const { resumo, contas, categorias, dividas } = useData();
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
@@ -47,6 +47,12 @@ export default function FinanceiroHomeScreen({ navigation }) {
         valor="Ver relatórios"
         cor={colors.info}
         onPress={() => navigation.navigate('Relatorios')}
+      />
+      <MenuItem
+        label="Dívidas e Financiamentos"
+        valor={`${dividas.length} cadastrada${dividas.length === 1 ? '' : 's'}`}
+        cor={colors.primary}
+        onPress={() => navigation.navigate('Dividas')}
       />
     </Screen>
   );

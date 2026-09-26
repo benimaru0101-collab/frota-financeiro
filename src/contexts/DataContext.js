@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { parseValorBR, formatValorBR } from '../utils/money';
-import { dataBRParaISO, dataISOParaBR, separarOrigemDestino } from '../utils/data';
+import { dataBRParaISO, dataISOParaBR, separarOrigemDestino, chaveDoMes, rotuloDoMes } from '../utils/data';
 import { reagendarNotificacoesVencimento, cancelarNotificacoesVencimento } from '../lib/notifications';
 
 // Mesma chave usada em ConfiguracoesScreen — lida aqui só pra saber se
@@ -81,6 +81,11 @@ function receitaDaLinha(l) {
     descricao: l.descricao,
     valor: formatValorBR(Number(l.valor)),
     data: dataISOParaBR(l.data_receita),
+    status: l.status ?? 'concluido',
+    statusLabel: (l.status ?? 'concluido') === 'pendente' ? 'Pendente' : 'Recebido',
+    dataPagamento: dataISOParaBR(l.data_pagamento),
+    formaPagamento: l.forma_pagamento ?? '',
+    comprovanteUrl: l.comprovante_url ?? null,
   };
 }
 
@@ -91,6 +96,12 @@ function despesaDaLinha(l) {
     valor: formatValorBR(Number(l.valor)),
     categoria: l.categorias_financeiras?.nome ?? 'Frota',
     data: dataISOParaBR(l.data_despesa),
+    status: l.status ?? 'concluido',
+    statusLabel: (l.status ?? 'concluido') === 'pendente' ? 'Pendente' : 'Pago',
+    dataPagamento: dataISOParaBR(l.data_pagamento),
+    formaPagamento: l.forma_pagamento ?? '',
+    comprovanteUrl: l.comprovante_url ?? null,
+    dividaId: l.divida_id ?? null,
   };
 }
 
@@ -102,6 +113,21 @@ function contaDaLinha(l) {
     banco: l.banco || '',
     descricao: l.descricao || '',
     saldo: formatValorBR(Number(l.saldo_inicial ?? 0)),
+  };
+}
+
+function dividaDaLinha(l) {
+  return {
+    id: l.id,
+    descricao: l.descricao,
+    credor: l.credor || '',
+    valorTotal: formatValorBR(Number(l.valor_total)),
+    numParcelas: l.num_parcelas,
+    taxaJuros: l.taxa_juros,
+    dataInicio: dataISOParaBR(l.data_inicio),
+    categoriaId: l.categoria_id,
+    veiculoId: l.veiculo_id,
+    placa: l.veiculos?.placa ?? '',
   };
 }
 
@@ -134,6 +160,7 @@ export function DataProvider({ children }) {
   const [despesas, setDespesas] = useState([]);
   const [contas, setContas] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [dividas, setDividas] = useState([]);
   const [hidratado, setHidratado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
@@ -157,6 +184,7 @@ export function DataProvider({ children }) {
       setDespesas([]);
       setContas([]);
       setCategorias([]);
+      setDividas([]);
       setHidratado(false);
       return;
     }
@@ -183,6 +211,7 @@ export function DataProvider({ children }) {
           { data: despesasData, error: erroDespesas },
           { data: contasData, error: erroContas },
           { data: categoriasData, error: erroCategorias },
+          { data: dividasData, error: erroDividas },
         ] = await Promise.all([
           supabase.from('viagens').select('*, veiculos(placa), motoristas(nome)').order('criado_em', { ascending: false }),
           supabase.from('abastecimentos').select('*, veiculos(placa)').order('criado_em', { ascending: false }),
@@ -192,6 +221,7 @@ export function DataProvider({ children }) {
           supabase.from('despesas').select('*, categorias_financeiras(nome)').order('criado_em', { ascending: false }),
           supabase.from('contas').select('*').order('criado_em', { ascending: false }),
           supabase.from('categorias_financeiras').select('*').order('nome', { ascending: true }),
+          supabase.from('dividas_financiamentos').select('*, veiculos(placa)').order('criado_em', { ascending: false }),
         ]);
         if (erroViagens) throw erroViagens;
         if (erroAbastecimentos) throw erroAbastecimentos;
@@ -201,6 +231,7 @@ export function DataProvider({ children }) {
         if (erroDespesas) throw erroDespesas;
         if (erroContas) throw erroContas;
         if (erroCategorias) throw erroCategorias;
+        if (erroDividas) throw erroDividas;
 
         if (cancelado) return;
         setVeiculos((veiculosData ?? []).map(veiculoDaLinha));
@@ -213,6 +244,7 @@ export function DataProvider({ children }) {
         setDespesas((despesasData ?? []).map(despesaDaLinha));
         setContas((contasData ?? []).map(contaDaLinha));
         setCategorias((categoriasData ?? []).map(categoriaDaLinha));
+        setDividas((dividasData ?? []).map(dividaDaLinha));
       } catch (erro) {
         console.warn('Não foi possível carregar os dados do Supabase:', erro?.message);
         Alert.alert('Erro ao carregar dados', erro?.message ?? 'Verifique sua conexão e tente novamente.');
@@ -560,12 +592,17 @@ export function DataProvider({ children }) {
 
   async function addReceita(item) {
     try {
+      const status = item.status === 'pendente' ? 'pendente' : 'concluido';
       const { data, error } = await supabase
         .from('receitas')
         .insert({
           descricao: item.descricao,
           valor: parseValorBR(item.valor),
           data_receita: dataBRParaISO(item.data),
+          status,
+          data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
+          forma_pagamento: item.formaPagamento || null,
+          comprovante_url: item.comprovanteUrl || null,
         })
         .select()
         .single();
@@ -573,6 +610,33 @@ export function DataProvider({ children }) {
       setReceitas((atual) => [receitaDaLinha(data), ...atual]);
     } catch (erro) {
       avisarErro('registrar a receita', erro);
+    }
+  }
+
+  // Marca uma receita como Recebida (ou volta pra Pendente) e/ou
+  // atualiza forma de pagamento e comprovante — usado no "toque" do
+  // item na lista e na edição do comprovante.
+  async function updateReceita(id, alteracoes) {
+    try {
+      const patch = {};
+      if (alteracoes.status !== undefined) {
+        patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
+        patch.data_pagamento = patch.status === 'concluido'
+          ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
+          : null;
+      }
+      if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
+      if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
+      const { error } = await supabase.from('receitas').update(patch).eq('id', id);
+      if (error) throw error;
+      updatePorId(setReceitas, id, {
+        ...alteracoes,
+        ...(patch.status !== undefined
+          ? { status: patch.status, statusLabel: patch.status === 'pendente' ? 'Pendente' : 'Recebido', dataPagamento: dataISOParaBR(patch.data_pagamento) }
+          : {}),
+      });
+    } catch (erro) {
+      avisarErro('atualizar a receita', erro);
     }
   }
 
@@ -589,6 +653,7 @@ export function DataProvider({ children }) {
   async function addDespesa(item) {
     try {
       const categoriaId = await obterCategoriaDespesaId(item.categoria);
+      const status = item.status === 'pendente' ? 'pendente' : 'concluido';
       const { data, error } = await supabase
         .from('despesas')
         .insert({
@@ -596,6 +661,10 @@ export function DataProvider({ children }) {
           valor: parseValorBR(item.valor),
           categoria_id: categoriaId,
           data_despesa: dataBRParaISO(item.data),
+          status,
+          data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
+          forma_pagamento: item.formaPagamento || null,
+          comprovante_url: item.comprovanteUrl || null,
         })
         .select('*, categorias_financeiras(nome)')
         .single();
@@ -603,6 +672,32 @@ export function DataProvider({ children }) {
       setDespesas((atual) => [despesaDaLinha(data), ...atual]);
     } catch (erro) {
       avisarErro('registrar a despesa', erro);
+    }
+  }
+
+  // Marca uma despesa como Paga (ou volta pra Pendente) e/ou atualiza
+  // forma de pagamento e comprovante.
+  async function updateDespesa(id, alteracoes) {
+    try {
+      const patch = {};
+      if (alteracoes.status !== undefined) {
+        patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
+        patch.data_pagamento = patch.status === 'concluido'
+          ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
+          : null;
+      }
+      if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
+      if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
+      const { error } = await supabase.from('despesas').update(patch).eq('id', id);
+      if (error) throw error;
+      updatePorId(setDespesas, id, {
+        ...alteracoes,
+        ...(patch.status !== undefined
+          ? { status: patch.status, statusLabel: patch.status === 'pendente' ? 'Pendente' : 'Pago', dataPagamento: dataISOParaBR(patch.data_pagamento) }
+          : {}),
+      });
+    } catch (erro) {
+      avisarErro('atualizar a despesa', erro);
     }
   }
 
@@ -708,16 +803,114 @@ export function DataProvider({ children }) {
     }
   }
 
+  // Dívidas e Financiamentos: cria a dívida e gera todas as parcelas
+  // (como despesas "Pendente" vinculadas) numa única chamada RPC para
+  // a função `criar_divida_com_parcelas` no Postgres — essa função
+  // roda dentro de uma transação e desfaz tudo automaticamente se
+  // algo falhar no meio da geração (ver migration-7).
+  async function criarDividaComParcelas(item) {
+    try {
+      const { data: dividaId, error } = await supabase.rpc('criar_divida_com_parcelas', {
+        p_descricao: item.descricao,
+        p_credor: item.credor || null,
+        p_valor_total: parseValorBR(item.valorTotal),
+        p_num_parcelas: parseInt(item.numParcelas, 10),
+        p_taxa_juros: item.taxaJuros ? parseFloat(String(item.taxaJuros).replace(',', '.')) : 0,
+        p_data_inicio: dataBRParaISO(item.dataInicio),
+        p_categoria_id: item.categoriaId || null,
+        p_veiculo_id: item.veiculoId || null,
+      });
+      if (error) throw error;
+
+      // A dívida e as parcelas foram geradas direto no banco — busca
+      // de novo pra refletir no app (mais simples e seguro do que
+      // tentar remontar N parcelas no estado local manualmente).
+      const [{ data: dividasData, error: erroDividas }, { data: despesasData, error: erroDespesas }] = await Promise.all([
+        supabase.from('dividas_financiamentos').select('*, veiculos(placa)').order('criado_em', { ascending: false }),
+        supabase.from('despesas').select('*, categorias_financeiras(nome)').order('criado_em', { ascending: false }),
+      ]);
+      if (erroDividas) throw erroDividas;
+      if (erroDespesas) throw erroDespesas;
+      setDividas((dividasData ?? []).map(dividaDaLinha));
+      setDespesas((despesasData ?? []).map(despesaDaLinha));
+      return dividaId;
+    } catch (erro) {
+      avisarErro('criar a dívida/financiamento', erro);
+      return null;
+    }
+  }
+
+  async function deleteDivida(id) {
+    try {
+      const { error } = await supabase.from('dividas_financiamentos').delete().eq('id', id);
+      if (error) throw error;
+      removerPorId(setDividas, id);
+      // As parcelas (despesas) já geradas continuam existindo como
+      // despesas normais — só perdem o vínculo com a dívida excluída
+      // (divida_id vira null via "on delete set null" no banco).
+      setDespesas((atual) => atual.map((d) => (d.dividaId === id ? { ...d, dividaId: null } : d)));
+    } catch (erro) {
+      avisarErro('excluir a dívida/financiamento', erro);
+    }
+  }
+
   // Totais derivados dos dados reais em memória — substituem os
   // números fixos que existiam antes só para preencher a UI.
   const resumo = useMemo(() => {
     const totalReceitas = receitas.reduce((soma, r) => soma + parseValorBR(r.valor), 0);
     const totalDespesas = despesas.reduce((soma, d) => soma + parseValorBR(d.valor), 0);
     const veiculosAtivos = veiculos.filter((v) => v.status === 'Ativo').length;
+
+    // Motor de Saldo: Saldo Atual só soma o que já foi de fato pago ou
+    // recebido (status 'concluido') — lançamentos "Pendente" não entram
+    // aqui, só na Projeção Futura abaixo.
+    const totalReceitasConcluidas = receitas
+      .filter((r) => r.status !== 'pendente')
+      .reduce((soma, r) => soma + parseValorBR(r.valor), 0);
+    const totalDespesasConcluidas = despesas
+      .filter((d) => d.status !== 'pendente')
+      .reduce((soma, d) => soma + parseValorBR(d.valor), 0);
+    const saldoAtual = totalReceitasConcluidas - totalDespesasConcluidas;
+
+    const receitasPendentesLista = receitas.filter((r) => r.status === 'pendente');
+    const despesasPendentesLista = despesas.filter((d) => d.status === 'pendente');
+    const totalReceitasPendentes = receitasPendentesLista.reduce((soma, r) => soma + parseValorBR(r.valor), 0);
+    const totalDespesasPendentes = despesasPendentesLista.reduce((soma, d) => soma + parseValorBR(d.valor), 0);
+
+    // Projeção Futura: lançamentos "Pendente" agrupados pelo mês da
+    // data prevista, mostrando o que ainda vai impactar o caixa.
+    const pendentesPorMes = new Map();
+    receitasPendentesLista.forEach((r) => {
+      const chave = chaveDoMes(r.data);
+      if (!chave) return;
+      const grupo = pendentesPorMes.get(chave) || { receitas: 0, despesas: 0 };
+      grupo.receitas += parseValorBR(r.valor);
+      pendentesPorMes.set(chave, grupo);
+    });
+    despesasPendentesLista.forEach((d) => {
+      const chave = chaveDoMes(d.data);
+      if (!chave) return;
+      const grupo = pendentesPorMes.get(chave) || { receitas: 0, despesas: 0 };
+      grupo.despesas += parseValorBR(d.valor);
+      pendentesPorMes.set(chave, grupo);
+    });
+    const projecaoFutura = Array.from(pendentesPorMes.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([chave, grupo]) => ({
+        mes: rotuloDoMes(chave),
+        receitas: formatValorBR(grupo.receitas),
+        despesas: formatValorBR(grupo.despesas),
+        saldoProjetado: formatValorBR(grupo.receitas - grupo.despesas),
+      }));
+
     return {
-      saldoTotal: formatValorBR(totalReceitas - totalDespesas),
+      saldoTotal: formatValorBR(saldoAtual),
+      saldoAtual: formatValorBR(saldoAtual),
       receitasMes: formatValorBR(totalReceitas),
       despesasMes: formatValorBR(totalDespesas),
+      receitasPendentes: formatValorBR(totalReceitasPendentes),
+      despesasPendentes: formatValorBR(totalDespesasPendentes),
+      projecaoFutura,
       veiculosAtivos,
     };
   }, [receitas, despesas, veiculos]);
@@ -732,10 +925,11 @@ export function DataProvider({ children }) {
     abastecimentos, addAbastecimento, updateAbastecimento, deleteAbastecimento,
     manutencoes, addManutencao, updateManutencao, deleteManutencao,
     documentos, addDocumento, updateDocumento, deleteDocumento,
-    receitas, addReceita, deleteReceita,
-    despesas, addDespesa, deleteDespesa,
+    receitas, addReceita, updateReceita, deleteReceita,
+    despesas, addDespesa, updateDespesa, deleteDespesa,
     contas, addConta, updateConta, deleteConta,
     categorias, addCategoria, updateCategoria, deleteCategoria,
+    dividas, criarDividaComParcelas, deleteDivida,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

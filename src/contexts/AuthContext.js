@@ -30,6 +30,8 @@ function extrairParametrosDaUrl(url) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
+  const [carregandoPerfil, setCarregandoPerfil] = useState(false);
 
   useEffect(() => {
     // Ao abrir o app, o Supabase tenta restaurar a sessão salva
@@ -54,6 +56,62 @@ export function AuthProvider({ children }) {
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // Controle de acesso (RBAC): busca o papel (role) do usuário na
+  // tabela `profiles` assim que a sessão muda. Se for o primeiro
+  // login, cria o perfil na hora — role nasce 'administrador' por
+  // padrão (default da coluna no banco), e pode ser alterado depois
+  // por um administrador em uma tela de gestão de usuários (fora do
+  // escopo desta entrega).
+  useEffect(() => {
+    let cancelado = false;
+    const usuario = session?.user;
+
+    if (!usuario) {
+      setRole(null);
+      return;
+    }
+
+    (async () => {
+      setCarregandoPerfil(true);
+      try {
+        const { data: perfilExistente, error: erroSelect } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', usuario.id)
+          .maybeSingle();
+        if (erroSelect) throw erroSelect;
+
+        if (perfilExistente) {
+          if (!cancelado) setRole(perfilExistente.role ?? 'administrador');
+          return;
+        }
+
+        const { data: perfilCriado, error: erroInsert } = await supabase
+          .from('profiles')
+          .insert({
+            id: usuario.id,
+            nome: usuario.user_metadata?.full_name ?? null,
+            email: usuario.email ?? null,
+          })
+          .select('role')
+          .single();
+        if (erroInsert) throw erroInsert;
+        if (!cancelado) setRole(perfilCriado?.role ?? 'administrador');
+      } catch (erro) {
+        console.warn('Não foi possível carregar/criar o perfil (role):', erro?.message);
+        // Não trava o app se o perfil falhar ao carregar — assume
+        // administrador como fallback seguro para não quebrar a demo.
+        if (!cancelado) setRole('administrador');
+      } finally {
+        if (!cancelado) setCarregandoPerfil(false);
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [session?.user?.id]);
 
   // Fluxo OAuth2 NATIVO do Google (Authorization Code + PKCE via
   // expo-auth-session), conforme pedido na atividade — nada de
@@ -130,6 +188,10 @@ export function AuthProvider({ children }) {
     session,
     user: session?.user ?? null,
     loading,
+    role,
+    carregandoPerfil,
+    isAdmin: role !== 'motorista',
+    isMotorista: role === 'motorista',
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
