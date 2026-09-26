@@ -89,7 +89,11 @@ begin
       descricao, valor, categoria_id, data_despesa, status, divida_id
     ) values (
       p_descricao || ' — parcela ' || i || '/' || p_num_parcelas,
-      v_valor_parcela,
+      -- a última parcela absorve a diferença de arredondamento
+      -- (ex.: 1000 em 3x = 333,33 + 333,33 + 333,34)
+      case when i = p_num_parcelas
+        then p_valor_total - v_valor_parcela * (p_num_parcelas - 1)
+        else v_valor_parcela end,
       p_categoria_id,
       (p_data_inicio + ((i - 1) || ' months')::interval)::date,
       'pendente',

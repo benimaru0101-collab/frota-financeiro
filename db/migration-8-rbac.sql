@@ -45,6 +45,11 @@ begin
     execute format('drop policy if exists "Usuários autenticados podem atualizar (%1$s)" on %1$s;', tabela);
     execute format('drop policy if exists "Usuários autenticados podem excluir (%1$s)" on %1$s;', tabela);
 
+    execute format('drop policy if exists "Só administrador lê (%1$s)" on %1$s;', tabela);
+    execute format('drop policy if exists "Só administrador insere (%1$s)" on %1$s;', tabela);
+    execute format('drop policy if exists "Só administrador atualiza (%1$s)" on %1$s;', tabela);
+    execute format('drop policy if exists "Só administrador exclui (%1$s)" on %1$s;', tabela);
+
     execute format('create policy "Só administrador lê (%1$s)" on %1$s for select to authenticated using (is_admin());', tabela);
     execute format('create policy "Só administrador insere (%1$s)" on %1$s for insert to authenticated with check (is_admin());', tabela);
     execute format('create policy "Só administrador atualiza (%1$s)" on %1$s for update to authenticated using (is_admin()) with check (is_admin());', tabela);
