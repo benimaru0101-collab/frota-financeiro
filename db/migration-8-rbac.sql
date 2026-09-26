@@ -19,6 +19,14 @@
 
 alter table profiles add column if not exists role text not null default 'administrador' check (role in ('administrador', 'motorista'));
 
+-- Usuários que já existiam antes desta migração ainda não têm linha em
+-- `profiles` (o app só passou a criar o perfil agora). Sem isso eles
+-- perderiam o acesso ao Financeiro — então criamos o perfil de todos
+-- como administrador (quem for motorista é ajustado depois).
+insert into profiles (id, email)
+select id, email from auth.users
+on conflict (id) do nothing;
+
 create or replace function is_admin() returns boolean
 language sql
 stable
