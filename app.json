@@ -7,13 +7,17 @@
     "userInterfaceStyle": "dark",
     "scheme": "frotafinanceiro",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#121212"
     },
     "android": {
       "package": "com.tempesta.frotafinanceiro",
       "adaptiveIcon": {
-        "backgroundColor": "#121212"
-      }
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFC107"
+      },
+      "versionCode": 1
     },
     "ios": {
       "bundleIdentifier": "com.tempesta.frotafinanceiro"
@@ -33,6 +37,7 @@
       "googleExpoClientId": "SEU_GOOGLE_CLIENT_ID_EXPO",
       "googleAndroidClientId": "SEU_GOOGLE_CLIENT_ID_ANDROID",
       "googleIosClientId": "SEU_GOOGLE_CLIENT_ID_IOS"
-    }
+    },
+    "icon": "./assets/icon.png"
   }
 }
