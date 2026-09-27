@@ -104,16 +104,18 @@ Concluído:
 
 Ainda pendente:
 
-- [ ] Rodar as migrations 6, 7 e 8 no Supabase de produção (SQL Editor,
-      nessa ordem) — sem isso o app quebra ao tentar ler/gravar os
-      campos novos
+- [x] Migrations 6, 7 e 8 aplicadas no Supabase de produção (conferido:
+      colunas novas, função de dívidas e policies por papel)
+- [x] APK Android de release gerado (expo prebuild + Gradle) e aberto no
+      emulador até a tela de login — ver README "Gerar o APK"
+- [x] Documentação técnica da Parte 2 em docs/documentacao-parte2.pdf
 - [ ] Testar o login com SSO Google e a persistência de sessão em um
       dispositivo/emulador real e anexar prints como evidência (Parte 2.6)
 - [ ] Gravar o vídeo demonstrativo do Núcleo Financeiro em
       emulador/dispositivo Android real
-- [ ] Confirmar no GitHub que o repositório está público e que a
-      proteção da branch main (PR obrigatório + 1 aprovação) está
-      realmente ativa nas configurações do repositório
+- [x] Repositório público e regra da main ativa (PR obrigatório + 1
+      aprovação, sem force push)
+- [ ] Aprovar o Pull Request #2 (build do APK) — precisa de um colega
 
 > Membros do grupo: atribua cada cartão a um responsável e defina
 > etiquetas por módulo (Financeiro / Frota / Auth / Infra).

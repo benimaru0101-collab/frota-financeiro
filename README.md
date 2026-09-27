@@ -87,3 +87,7 @@ Sugestão de convenção de branches: `feature/nome-da-tela`,
 2. **Build local** (precisa do Android Studio instalado, ~10 GB livres): rode `gerar-apk.bat` (ou `npx expo prebuild --platform android --clean` e depois `cd android && gradlew assembleRelease`). O APK sai em `android/app/build/outputs/apk/release/app-release.apk`.
 3. **Build na nuvem** (sem Android Studio): `npx eas-cli build -p android --profile preview` — precisa de uma conta Expo gratuita; no fim a Expo mostra um link para baixar o APK.
 4. Instale o APK no celular (permitir "fontes desconhecidas") ou no emulador (`adb install app-release.apk`).
+
+## Documentação da Parte 2
+
+Veja `docs/documentacao-parte2.pdf` (núcleo financeiro, navegação e UX, arquitetura de dados, custos, roteiro do vídeo e testes).
