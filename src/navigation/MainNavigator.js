@@ -44,6 +44,7 @@ import NovoDocumentoScreen from '../screens/frota/NovoDocumentoScreen';
 import EditarDocumentoScreen from '../screens/frota/EditarDocumentoScreen';
 
 import PerfilScreen from '../screens/outros/PerfilScreen';
+import UsuariosScreen from '../screens/outros/UsuariosScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
 import EditarPerfilScreen from '../screens/outros/EditarPerfilScreen';
 import AlterarSenhaScreen from '../screens/outros/AlterarSenhaScreen';
@@ -112,6 +113,7 @@ function MaisStackNavigator() {
     <MaisStack.Navigator screenOptions={stackOptions}>
       <MaisStack.Screen name="Perfil" component={PerfilScreen} />
       <MaisStack.Screen name="Configuracoes" component={ConfiguracoesScreen} />
+      <MaisStack.Screen name="Usuarios" component={UsuariosScreen} />
       <MaisStack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ presentation: 'modal' }} />
       <MaisStack.Screen name="AlterarSenha" component={AlterarSenhaScreen} options={{ presentation: 'modal' }} />
     </MaisStack.Navigator>

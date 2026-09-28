@@ -16,3 +16,4 @@ npm-debug.*
 *.mobileprovision
 android/
 ios/
+# .env entra no upload do EAS (credenciais do build), mas continua fora do git

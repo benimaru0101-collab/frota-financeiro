@@ -26,6 +26,9 @@ export default function PerfilScreen({ navigation }) {
         <SecondaryButton title="Editar Perfil" onPress={() => navigation.navigate('EditarPerfil')} style={{ marginBottom: spacing.sm }} />
         <SecondaryButton title="Segurança" onPress={() => navigation.navigate('AlterarSenha')} style={{ marginBottom: spacing.sm }} />
         <SecondaryButton title="Configurações" onPress={() => navigation.navigate('Configuracoes')} style={{ marginBottom: spacing.sm }} />
+        {isAdmin && (
+          <SecondaryButton title="Usuários e Papéis" onPress={() => navigation.navigate('Usuarios')} style={{ marginBottom: spacing.sm }} />
+        )}
         <SecondaryButton title="Sair da conta" onPress={signOut} />
       </Card>
     </Screen>
