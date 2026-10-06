@@ -48,6 +48,7 @@ import UsuariosScreen from '../screens/outros/UsuariosScreen';
 import ConfiguracoesScreen from '../screens/outros/ConfiguracoesScreen';
 import EditarPerfilScreen from '../screens/outros/EditarPerfilScreen';
 import AlterarSenhaScreen from '../screens/outros/AlterarSenhaScreen';
+import AlertasScreen from '../screens/outros/AlertasScreen';
 
 import { colors } from '../theme/colors';
 
@@ -114,6 +115,7 @@ function MaisStackNavigator() {
       <MaisStack.Screen name="Perfil" component={PerfilScreen} />
       <MaisStack.Screen name="Configuracoes" component={ConfiguracoesScreen} />
       <MaisStack.Screen name="Usuarios" component={UsuariosScreen} />
+      <MaisStack.Screen name="Alertas" component={AlertasScreen} />
       <MaisStack.Screen name="EditarPerfil" component={EditarPerfilScreen} options={{ presentation: 'modal' }} />
       <MaisStack.Screen name="AlterarSenha" component={AlterarSenhaScreen} options={{ presentation: 'modal' }} />
     </MaisStack.Navigator>

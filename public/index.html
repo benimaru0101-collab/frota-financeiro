@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <title>Financeiro e Frota Logística</title>
+    <meta name="description" content="Controle financeiro e de frota para transportadoras." />
+    <meta name="theme-color" content="#FFC107" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Frota Fin." />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <style id="expo-reset">
+      html, body { height: 100%; background-color: #121212; }
+      body { overflow: hidden; }
+      #root { display: flex; height: 100%; flex: 1; }
+    </style>
+  </head>
+  <body>
+    <noscript>Este aplicativo precisa de JavaScript para funcionar.</noscript>
+    <div id="root"></div>
+    <script>
+      // Service worker mínimo: torna o app instalável (PWA) e deixa a
+      // "casca" abrir mesmo sem internet. Os dados vêm sempre da rede.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>

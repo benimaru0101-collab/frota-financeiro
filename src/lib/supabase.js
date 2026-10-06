@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 // As credenciais reais NUNCA devem ir no código-fonte versionado.
@@ -17,6 +18,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // continue logado depois de fechar e reabrir o app (Parte 2 - item 5
     // da atividade: "evidências da persistência da sessão").
     persistSession: true,
-    detectSessionInUrl: false,
+    // Na versão web/PWA o login do Google volta para a própria página com
+    // ?code=... na URL; o Supabase precisa lê-la. No celular, não.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
@@ -34,16 +35,25 @@ export async function tirarFoto() {
 
 // Lê o arquivo escolhido, envia pro Storage e devolve a URL pública.
 export async function enviarArquivoDocumento(asset) {
-  const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-  const extensao = (asset.uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
+  // No navegador o expo-file-system não lê arquivos: o asset.uri é uma
+  // URL blob:/data:, então basta buscá-la e enviar o binário direto.
+  const corpo = Platform.OS === 'web'
+    ? await (await fetch(asset.uri)).arrayBuffer()
+    : decode(
+        await FileSystem.readAsStringAsync(asset.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        })
+      );
+  const ehUrlTemporaria = /^(blob|data):/.test(asset.uri);
+  const extensao = ehUrlTemporaria
+    ? (asset.mimeType?.split('/')[1] || 'jpg').replace('jpeg', 'jpg')
+    : (asset.uri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
   const nomeArquivo = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extensao}`;
   const contentType = asset.mimeType || (extensao === 'png' ? 'image/png' : 'image/jpeg');
 
   const { error } = await supabase.storage
     .from('documentos')
-    .upload(nomeArquivo, decode(base64), { contentType, upsert: false });
+    .upload(nomeArquivo, corpo, { contentType, upsert: false });
   if (error) throw error;
 
   const { data } = supabase.storage.from('documentos').getPublicUrl(nomeArquivo);

@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Screen, Card, Title, Subtitle, StatPill, FilterTabs, DonutChart, LineChart } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { agruparPorMes } from '../../utils/data';
 import { formatValorBR, parseValorBR } from '../../utils/money';
 import { FILTROS_PADRAO, PERIODOS, filtrarLancamentos, agruparDespesasPorCategoria, rotuloPeriodo } from '../../utils/relatorios';
+import { lancamentosParaCsv } from '../../utils/csv';
+import { exportarCsv, nomeArquivoRelatorio } from '../../utils/exportarCsv';
 import { colors, spacing } from '../../theme/colors';
 
 export default function RelatoriosScreen({ route, navigation }) {
@@ -38,6 +40,17 @@ export default function RelatoriosScreen({ route, navigation }) {
   );
 
   const meses = useMemo(() => agruparPorMes(receitasFiltradas, despesasFiltradas), [receitasFiltradas, despesasFiltradas]);
+
+  async function exportar() {
+    try {
+      await exportarCsv(
+        nomeArquivoRelatorio(filtros.periodo),
+        lancamentosParaCsv({ receitasFiltradas, despesasFiltradas })
+      );
+    } catch (e) {
+      Alert.alert('Não foi possível exportar', 'Tente novamente em instantes.');
+    }
+  }
 
   return (
     <Screen>
@@ -134,12 +147,20 @@ export default function RelatoriosScreen({ route, navigation }) {
         >
           <Text style={styles.detalhadoBotaoTexto}>Ver relatório detalhado</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.exportarBotao} onPress={exportar}>
+          <Text style={styles.exportarBotaoTexto}>⬇ Exportar CSV (Excel)</Text>
+        </TouchableOpacity>
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  exportarBotao: {
+    marginTop: spacing.md, backgroundColor: colors.surfaceAlt, borderRadius: 8, borderWidth: 1,
+    borderColor: colors.border, paddingVertical: 14, alignItems: 'center',
+  },
+  exportarBotaoTexto: { color: colors.text, fontWeight: '600', fontSize: 14 },
   headerRow: { marginTop: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   filtrosBotao: {
     backgroundColor: colors.surfaceAlt, borderRadius: 999, borderWidth: 1, borderColor: colors.border,

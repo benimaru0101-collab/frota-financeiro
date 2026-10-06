@@ -46,12 +46,12 @@ Justificativa da stack está na apresentação da atividade (`docs/`).
 
 - **Autenticação:** Splash, Boas-vindas, Login, Cadastro, Recuperar
   senha, Código de verificação, Nova senha, Sucesso
-- **Início:** Dashboard com saldo, receitas/despesas do mês e acesso
-  rápido
+- **Início:** Dashboard com saldo, receitas/despesas do mês, alertas e
+  acesso rápido
 - **Financeiro:** Receitas, Despesas, Fluxo de Caixa
 - **Frota:** Veículos, Detalhes do veículo, Motoristas, Viagens,
   Abastecimentos, Manutenções, Documentos
-- **Mais:** Perfil, Configurações
+- **Mais:** Perfil, Configurações, Usuários e Papéis, **Alertas**
 
 ## Modelagem de dados
 
@@ -88,6 +88,34 @@ Sugestão de convenção de branches: `feature/nome-da-tela`,
 3. **Build na nuvem** (sem Android Studio): `npx eas-cli build -p android --profile preview` — precisa de uma conta Expo gratuita; no fim a Expo mostra um link para baixar o APK.
 4. Instale o APK no celular (permitir "fontes desconhecidas") ou no emulador (`adb install app-release.apk`).
 
+## Versão web / PWA (instalável no celular e no computador)
+
+O mesmo código roda no navegador e pode ser instalado como aplicativo
+("Adicionar à tela inicial" / ícone de instalar no Chrome).
+
+> ⚠️ Esta parte foi escrita sem acesso ao npm, então **não foi
+> compilada aqui**. Rode os passos abaixo na máquina de vocês.
+
+1. `npm install` (entram `react-native-web`, `react-dom` e `@expo/metro-runtime`).
+2. Teste local: `npm run web`.
+3. Gere o site estático: `npm run build:web` (sai em `dist/`).
+4. Publicação na Vercel: importe o repositório, defina as variáveis
+   `SUPABASE_URL` e `SUPABASE_ANON_KEY` (o `app.config.js` lê na hora do
+   build) — o `vercel.json` já traz comando de build e rotas.
+5. No Supabase, em **Authentication > URL Configuration**, adicione a
+   URL do site em *Redirect URLs* (necessário para o login com Google).
+
+Diferenças na web: notificações locais agendadas não existem no
+navegador (o aviso visual de Alertas continua funcionando) e a
+exportação de CSV baixa o arquivo em vez de abrir o compartilhamento.
+
+## Testes automatizados
+
+`npm test` roda os testes das regras puras (central de alertas e
+exportação CSV) com o runner nativo do Node — sem dependências extras.
+
 ## Documentação da Parte 2
 
 Veja `docs/documentacao-parte2.pdf` (núcleo financeiro, navegação e UX, arquitetura de dados, custos, roteiro do vídeo e testes).
+
+Veja também `docs/funcionalidades-saas.md` (central de alertas, exportação CSV e PWA).
