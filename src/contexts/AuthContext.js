@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
@@ -117,6 +118,19 @@ export function AuthProvider({ children }) {
   // expo-auth-session), conforme pedido na atividade — nada de
   // formulário manual pedindo email/senha do Google.
   async function signInWithGoogle() {
+    // Versão web/PWA: redireciona a própria página para o Google e volta
+    // para a mesma origem (o Supabase lê a sessão da URL, ver lib/supabase.js).
+    // A URL do site precisa estar em Authentication > URL Configuration >
+    // Redirect URLs no painel do Supabase.
+    if (Platform.OS === 'web') {
+      const { error: erroWeb } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (erroWeb) throw erroWeb;
+      return { type: 'redirect' };
+    }
+
     const redirectUri = AuthSession.makeRedirectUri({
       scheme: 'frotafinanceiro',
     });

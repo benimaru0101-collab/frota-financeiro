@@ -119,3 +119,20 @@ Ainda pendente:
 
 > Membros do grupo: atribua cada cartão a um responsável e defina
 > etiquetas por módulo (Financeiro / Frota / Auth / Infra).
+
+## Evolução inspirada no SaaS TempesT
+
+- [x] Central de alertas: tela "Alertas" (aba Mais) e bloco no Dashboard
+      juntando documentos vencidos/vencendo (30 dias) e contas
+      pendentes atrasadas ou vencendo em 7 dias, ordenados por
+      gravidade (crítico, atenção, aviso). Motorista só vê alertas da
+      frota (RBAC). Regra pura em `src/utils/alertas.js`, com testes
+- [x] Exportação CSV dos relatórios (Excel BR: separador `;`, BOM,
+      vírgula decimal, proteção contra injeção de fórmula) nas telas
+      Relatórios e Relatório Detalhado. Regra em `src/utils/csv.js`
+- [x] Versão web/PWA: `react-native-web`, manifest, ícones, service
+      worker mínimo e `vercel.json` (login Google, upload e
+      notificações adaptados para o navegador)
+- [x] Testes automatizados (`npm test`, runner nativo do Node)
+- [ ] Rodar `npm install`, testar `npm run web` e publicar na Vercel
+- [ ] Testar o fluxo logado no celular (alertas e exportação CSV)

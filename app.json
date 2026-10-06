@@ -38,6 +38,18 @@
       "googleAndroidClientId": "SEU_GOOGLE_CLIENT_ID_ANDROID",
       "googleIosClientId": "SEU_GOOGLE_CLIENT_ID_IOS"
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./public/favicon.png",
+      "name": "Financeiro e Frota Logística",
+      "shortName": "Frota Fin.",
+      "lang": "pt-BR",
+      "themeColor": "#FFC107",
+      "backgroundColor": "#121212",
+      "display": "standalone",
+      "orientation": "portrait"
+    }
   }
 }

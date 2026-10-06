@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Subtitle } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { documentosVencendo } from '../utils/vencimentos';
+import { montarAlertas, contarPorSeveridade } from '../utils/alertas';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
   const { user, isAdmin } = useAuth();
-  const { resumo: dashboardResumo, documentos } = useData();
+  const { resumo: dashboardResumo, documentos, receitas, despesas } = useData();
   const primeiroNome = (user?.user_metadata?.full_name || user?.email || 'Juliano').split(' ')[0];
-  const avisos = documentosVencendo(documentos, 30);
+  const alertas = useMemo(
+    () => montarAlertas({ documentos, receitas, despesas }, { podeVerFinanceiro: isAdmin }),
+    [documentos, receitas, despesas, isAdmin]
+  );
+  const contagem = contarPorSeveridade(alertas);
 
   return (
     <Screen>
@@ -63,25 +67,31 @@ export default function DashboardScreen({ navigation }) {
           </View>
         )}
 
-        {avisos.length > 0 && (
+        {alertas.length > 0 && (
           <View style={{ marginTop: spacing.lg }}>
-            <Text style={styles.sectionTitle}>Avisos de vencimento</Text>
-            {avisos.slice(0, 5).map((doc) => (
+            <View style={styles.alertasCabecalho}>
+              <Text style={styles.sectionTitle}>Alertas</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Mais', { screen: 'Alertas' })}>
+                <Text style={styles.verTodos}>Ver todos ({alertas.length})</Text>
+              </TouchableOpacity>
+            </View>
+            {contagem.critico > 0 && (
+              <Text style={[styles.alertasResumo, { color: colors.danger }]}>
+                {contagem.critico} item(ns) crítico(s) precisam de ação agora
+              </Text>
+            )}
+            {alertas.slice(0, 5).map((a) => (
               <TouchableOpacity
-                key={doc.id}
-                onPress={() => navigation.navigate('Frota', { screen: 'Documentos' })}
+                key={a.id}
+                onPress={() => navigation.navigate(a.destino.aba, { screen: a.destino.tela })}
               >
                 <Card style={styles.avisoCard}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.avisoTitulo}>{doc.tipo} — {doc.placa}</Text>
-                    <Text style={styles.avisoData}>Vence em {doc.vencimento}</Text>
+                    <Text style={styles.avisoTitulo}>{a.titulo}</Text>
+                    <Text style={styles.avisoData}>{a.detalhe}</Text>
                   </View>
-                  <Text style={[styles.avisoDias, { color: doc.diasRestantes < 0 ? colors.danger : colors.primary }]}>
-                    {doc.diasRestantes < 0
-                      ? `${Math.abs(doc.diasRestantes)}d atrasado`
-                      : doc.diasRestantes === 0
-                      ? 'Hoje'
-                      : `${doc.diasRestantes}d`}
+                  <Text style={[styles.avisoDias, { color: a.severidade === 'critico' ? colors.danger : a.severidade === 'atencao' ? colors.primary : colors.info }]}>
+                    {a.dias < 0 ? `${Math.abs(a.dias)}d atrasado` : a.dias === 0 ? 'Hoje' : `${a.dias}d`}
                   </Text>
                 </Card>
               </TouchableOpacity>
@@ -132,6 +142,9 @@ const styles = StyleSheet.create({
   avisoTitulo: { color: colors.text, fontSize: 14, fontWeight: '600' },
   avisoData: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   avisoDias: { fontSize: 13, fontWeight: '700', marginLeft: spacing.sm },
+  alertasCabecalho: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  verTodos: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  alertasResumo: { fontSize: 12, fontWeight: '600', marginBottom: spacing.xs },
   row: { flexDirection: 'row', marginTop: spacing.md },
   metade: { flex: 1 },
   metricLabel: { color: colors.textMuted, fontSize: 12 },
