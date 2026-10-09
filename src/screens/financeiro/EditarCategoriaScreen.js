@@ -11,7 +11,7 @@ const TIPOS = [
 ];
 
 export default function EditarCategoriaScreen({ route, navigation }) {
-  const { updateCategoria, deleteCategoria } = useData();
+  const { updateCategoria, alternarCategoriaAtiva } = useData();
   const categoria = route?.params?.categoria;
 
   const [nome, setNome] = useState(categoria?.nome ?? '');
@@ -43,15 +43,20 @@ export default function EditarCategoriaScreen({ route, navigation }) {
     navigation.goBack();
   }
 
-  function handleExcluir() {
-    Alert.alert('Excluir categoria', `Tem certeza que deseja excluir "${categoria.nome}"?`, [
+  // Soft delete: desativar mantém o histórico dos lançamentos intacto.
+  const inativa = categoria.ativa === false;
+  function handleAlternarAtiva() {
+    const acao = inativa ? 'Reativar' : 'Desativar';
+    const detalhe = inativa
+      ? 'Ela volta a aparecer nos formulários.'
+      : 'Ela some dos formulários, mas os lançamentos antigos continuam ligados a ela.';
+    Alert.alert(`${acao} categoria`, `${acao} "${categoria.nome}"? ${detalhe}`, [
       { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Excluir',
-        style: 'destructive',
+        text: acao,
         onPress: () => {
-          deleteCategoria(categoria.id);
-          navigation.popToTop();
+          alternarCategoriaAtiva(categoria.id, inativa);
+          navigation.goBack();
         },
       },
     ]);
@@ -78,9 +83,9 @@ export default function EditarCategoriaScreen({ route, navigation }) {
 
         <PrimaryButton title="Salvar Alterações" onPress={handleSalvar} />
         <SecondaryButton
-          title="Excluir Categoria"
-          onPress={handleExcluir}
-          style={{ marginTop: spacing.sm, borderColor: colors.danger }}
+          title={inativa ? 'Reativar Categoria' : 'Desativar Categoria'}
+          onPress={handleAlternarAtiva}
+          style={{ marginTop: spacing.sm, borderColor: inativa ? colors.success : colors.danger }}
         />
       </View>
     </Screen>

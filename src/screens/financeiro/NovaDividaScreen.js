@@ -10,6 +10,15 @@ function formatarValor(texto) {
   return limpo.startsWith('R$') ? limpo : `R$ ${limpo}`;
 }
 
+function numeroDoTexto(texto) {
+  return parseFloat(String(texto).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, ''));
+}
+
+function emReais(numero) {
+  const [inteiro, centavos] = numero.toFixed(2).split('.');
+  return `R$ ${inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${centavos}`;
+}
+
 export default function NovaDividaScreen({ navigation }) {
   const { criarDividaComParcelas, categorias, veiculos } = useData();
   const [descricao, setDescricao] = useState('');
@@ -18,11 +27,20 @@ export default function NovaDividaScreen({ navigation }) {
   const [numParcelas, setNumParcelas] = useState('');
   const [taxaJuros, setTaxaJuros] = useState('');
   const [dataInicio, setDataInicio] = useState('');
+  const [valorQuitacao, setValorQuitacao] = useState('');
   const [categoriaNome, setCategoriaNome] = useState('');
   const [placa, setPlaca] = useState('');
   const [salvando, setSalvando] = useState(false);
 
-  const categoriasDespesa = categorias.filter((c) => c.tipo === 'despesa');
+  const categoriasDespesa = categorias.filter((c) => c.tipo === 'despesa' && c.ativa !== false);
+
+  // Prévia do valor de cada parcela (mesma conta da função no banco).
+  const totalNumero = numeroDoTexto(valorTotal);
+  const parcelasPrevia = parseInt(numParcelas, 10);
+  const valorParcela =
+    totalNumero > 0 && Number.isInteger(parcelasPrevia) && parcelasPrevia >= 1 && parcelasPrevia <= 360
+      ? Math.round((totalNumero / parcelasPrevia) * 100) / 100
+      : null;
 
   async function handleSalvar() {
     if (!descricao.trim() || !valorTotal.trim() || !numParcelas.trim() || !dataInicio.trim()) {
@@ -32,6 +50,10 @@ export default function NovaDividaScreen({ navigation }) {
     const parcelasNum = parseInt(numParcelas, 10);
     if (!Number.isInteger(parcelasNum) || parcelasNum < 1 || parcelasNum > 360) {
       Alert.alert('Número de parcelas inválido', 'Use um número inteiro entre 1 e 360.');
+      return;
+    }
+    if (valorQuitacao.trim() && !(numeroDoTexto(valorQuitacao) > 0)) {
+      Alert.alert('Valor de quitação inválido', 'Deixe em branco ou informe um valor maior que zero.');
       return;
     }
     setSalvando(true);
@@ -44,6 +66,7 @@ export default function NovaDividaScreen({ navigation }) {
       numParcelas: parcelasNum,
       taxaJuros,
       dataInicio: dataInicio.trim(),
+      valorQuitacao: valorQuitacao.trim() ? formatarValor(valorQuitacao) : '',
       categoriaId: categoriaEncontrada?.id ?? null,
       veiculoId: veiculoEncontrado?.id ?? null,
     });
@@ -73,6 +96,13 @@ export default function NovaDividaScreen({ navigation }) {
         <Input placeholder="Ex.: 1,5" keyboardType="decimal-pad" value={taxaJuros} onChangeText={setTaxaJuros} />
         <Label>Data de Início (1ª parcela)</Label>
         <Input placeholder="DD/MM/AAAA" value={dataInicio} onChangeText={setDataInicio} />
+        {valorParcela ? (
+          <Text style={{ color: colors.primary, fontSize: 13, marginBottom: spacing.sm }}>
+            {parseInt(numParcelas, 10)}x de {emReais(valorParcela)} (a última parcela ajusta os centavos)
+          </Text>
+        ) : null}
+        <Label>Valor para quitação antecipada (opcional)</Label>
+        <Input placeholder="0,00" keyboardType="decimal-pad" value={valorQuitacao} onChangeText={setValorQuitacao} />
 
         {categoriasDespesa.length > 0 && (
           <>

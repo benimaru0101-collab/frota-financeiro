@@ -49,6 +49,7 @@ export default function DividasScreen({ navigation }) {
                     <Text style={styles.descricao}>{item.descricao}</Text>
                     {item.credor ? <Text style={styles.meta}>{item.credor}</Text> : null}
                     <Text style={styles.meta}>Início: {item.dataInicio}{item.placa ? ` · ${item.placa}` : ''}</Text>
+                    {item.valorQuitacao ? <Text style={styles.meta}>Quitação antecipada: {item.valorQuitacao}</Text> : null}
                   </View>
                   <Text style={styles.valor}>{item.valorTotal}</Text>
                 </View>

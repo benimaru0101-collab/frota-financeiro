@@ -128,6 +128,7 @@ function dividaDaLinha(l) {
     categoriaId: l.categoria_id,
     veiculoId: l.veiculo_id,
     placa: l.veiculos?.placa ?? '',
+    valorQuitacao: l.valor_quitacao != null ? formatValorBR(Number(l.valor_quitacao)) : '',
   };
 }
 
@@ -139,6 +140,21 @@ function categoriaDaLinha(l) {
     icone: l.icone || '',
     cor: l.cor || '',
     descricao: l.descricao || '',
+    // Soft delete (migration-10): sem a coluna, toda categoria conta como ativa.
+    ativa: l.ativa !== false,
+  };
+}
+
+// Usadas enquanto a tabela formas_pagamento (migration-10) não existir
+// ou estiver vazia, para os formulários nunca ficarem sem opção.
+export const FORMAS_PAGAMENTO_PADRAO = ['Pix', 'Boleto', 'Cartão', 'Dinheiro', 'Transferência'];
+
+function formaPagamentoDaLinha(l) {
+  return {
+    id: l.id,
+    nome: l.nome,
+    icone: l.icone || '',
+    ativa: l.ativa !== false,
   };
 }
 
@@ -161,6 +177,7 @@ export function DataProvider({ children }) {
   const [contas, setContas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [dividas, setDividas] = useState([]);
+  const [formasPagamento, setFormasPagamento] = useState([]);
   const [hidratado, setHidratado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
@@ -185,6 +202,7 @@ export function DataProvider({ children }) {
       setContas([]);
       setCategorias([]);
       setDividas([]);
+      setFormasPagamento([]);
       setHidratado(false);
       return;
     }
@@ -245,6 +263,19 @@ export function DataProvider({ children }) {
         setContas((contasData ?? []).map(contaDaLinha));
         setCategorias((categoriasData ?? []).map(categoriaDaLinha));
         setDividas((dividasData ?? []).map(dividaDaLinha));
+
+        // Formas de pagamento carregam à parte: se a migration-10 ainda
+        // não foi aplicada, o app segue com a lista padrão em vez de
+        // travar o carregamento inteiro.
+        const { data: formasData, error: erroFormas } = await supabase
+          .from('formas_pagamento')
+          .select('*')
+          .order('nome', { ascending: true });
+        if (erroFormas) {
+          console.warn('Formas de pagamento indisponíveis (rode a migration-10):', erroFormas.message);
+        } else if (!cancelado) {
+          setFormasPagamento((formasData ?? []).map(formaPagamentoDaLinha));
+        }
       } catch (erro) {
         console.warn('Não foi possível carregar os dados do Supabase:', erro?.message);
         Alert.alert('Erro ao carregar dados', erro?.message ?? 'Verifique sua conexão e tente novamente.');
@@ -803,6 +834,46 @@ export function DataProvider({ children }) {
     }
   }
 
+  // Soft delete: a categoria nunca é apagada, só desativada/reativada.
+  // Assim as receitas e despesas antigas continuam ligadas a ela.
+  async function alternarCategoriaAtiva(id, ativa) {
+    try {
+      const { error } = await supabase.from('categorias_financeiras').update({ ativa }).eq('id', id);
+      if (error) throw error;
+      updatePorId(setCategorias, id, { ativa });
+    } catch (erro) {
+      avisarErro(ativa ? 'reativar a categoria' : 'desativar a categoria', erro);
+    }
+  }
+
+  async function addFormaPagamento(item) {
+    try {
+      const { data, error } = await supabase
+        .from('formas_pagamento')
+        .insert({ nome: item.nome, icone: item.icone || null })
+        .select()
+        .single();
+      if (error) throw error;
+      setFormasPagamento((atual) =>
+        [...atual, formaPagamentoDaLinha(data)].sort((a, b) => a.nome.localeCompare(b.nome))
+      );
+      return true;
+    } catch (erro) {
+      avisarErro('cadastrar a forma de pagamento', erro);
+      return false;
+    }
+  }
+
+  async function alternarFormaPagamentoAtiva(id, ativa) {
+    try {
+      const { error } = await supabase.from('formas_pagamento').update({ ativa }).eq('id', id);
+      if (error) throw error;
+      updatePorId(setFormasPagamento, id, { ativa });
+    } catch (erro) {
+      avisarErro(ativa ? 'reativar a forma de pagamento' : 'desativar a forma de pagamento', erro);
+    }
+  }
+
   // Dívidas e Financiamentos: cria a dívida e gera todas as parcelas
   // (como despesas "Pendente" vinculadas) numa única chamada RPC para
   // a função `criar_divida_com_parcelas` no Postgres — essa função
@@ -821,6 +892,16 @@ export function DataProvider({ children }) {
         p_veiculo_id: item.veiculoId || null,
       });
       if (error) throw error;
+
+      // Valor de quitação antecipada é opcional e não afeta as parcelas:
+      // grava depois da transação; se falhar, a dívida continua válida.
+      if (item.valorQuitacao) {
+        const { error: erroQuitacao } = await supabase
+          .from('dividas_financiamentos')
+          .update({ valor_quitacao: parseValorBR(item.valorQuitacao) })
+          .eq('id', dividaId);
+        if (erroQuitacao) console.warn('Não foi possível salvar o valor de quitação:', erroQuitacao.message);
+      }
 
       // A dívida e as parcelas foram geradas direto no banco — busca
       // de novo pra refletir no app (mais simples e seguro do que
@@ -928,7 +1009,13 @@ export function DataProvider({ children }) {
     receitas, addReceita, updateReceita, deleteReceita,
     despesas, addDespesa, updateDespesa, deleteDespesa,
     contas, addConta, updateConta, deleteConta,
-    categorias, addCategoria, updateCategoria, deleteCategoria,
+    categorias, addCategoria, updateCategoria, deleteCategoria, alternarCategoriaAtiva,
+    formasPagamento, addFormaPagamento, alternarFormaPagamentoAtiva,
+    // Nomes usados nos chips dos formulários (só as ativas; lista padrão
+    // se a tabela ainda não existir).
+    nomesFormasPagamento: formasPagamento.some((f) => f.ativa)
+      ? formasPagamento.filter((f) => f.ativa).map((f) => f.nome)
+      : FORMAS_PAGAMENTO_PADRAO,
     dividas, criarDividaComParcelas, deleteDivida,
   };
 
