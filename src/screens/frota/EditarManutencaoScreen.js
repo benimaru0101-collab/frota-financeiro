@@ -21,7 +21,7 @@ export default function EditarManutencaoScreen({ route, navigation }) {
 
   if (!manutencao) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Manutenção não encontrada</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

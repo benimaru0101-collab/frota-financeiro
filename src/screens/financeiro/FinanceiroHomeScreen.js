@@ -5,7 +5,8 @@ import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
 export default function FinanceiroHomeScreen({ navigation }) {
-  const { resumo, contas, categorias, dividas } = useData();
+  const { resumo, contas, categorias, dividas, nomesFormasPagamento } = useData();
+  const categoriasAtivas = categorias.filter((c) => c.ativa !== false).length;
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg, marginBottom: spacing.lg }}>
@@ -38,9 +39,15 @@ export default function FinanceiroHomeScreen({ navigation }) {
       />
       <MenuItem
         label="Categorias"
-        valor={`${categorias.length} categoria${categorias.length === 1 ? '' : 's'}`}
+        valor={`${categoriasAtivas} ativa${categoriasAtivas === 1 ? '' : 's'}`}
         cor={colors.text}
         onPress={() => navigation.navigate('Categorias')}
+      />
+      <MenuItem
+        label="Formas de Pagamento"
+        valor={`${nomesFormasPagamento.length} ativa${nomesFormasPagamento.length === 1 ? '' : 's'}`}
+        cor={colors.text}
+        onPress={() => navigation.navigate('FormasPagamento')}
       />
       <MenuItem
         label="Relatórios"

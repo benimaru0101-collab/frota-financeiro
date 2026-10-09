@@ -6,7 +6,6 @@ import { escolherDaGaleria, tirarFoto, enviarArquivoDocumento } from '../../lib/
 import { spacing, colors, radius } from '../../theme/colors';
 
 const STATUS_OPCOES = ['Recebido', 'Pendente'];
-const FORMAS_PAGAMENTO = ['Pix', 'Boleto', 'Cartão', 'Dinheiro', 'Transferência'];
 
 function formatarValor(texto) {
   const limpo = texto.trim();
@@ -15,12 +14,14 @@ function formatarValor(texto) {
 }
 
 export default function NovaReceitaScreen({ navigation }) {
-  const { addReceita } = useData();
+  // Formas de pagamento vêm do cadastro (só as ativas).
+  const { addReceita, nomesFormasPagamento } = useData();
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [data, setData] = useState('');
   const [statusLabel, setStatusLabel] = useState(STATUS_OPCOES[0]);
-  const [formaPagamento, setFormaPagamento] = useState(FORMAS_PAGAMENTO[0]);
+  const [formaEscolhida, setFormaPagamento] = useState(nomesFormasPagamento[0]);
+  const formaPagamento = nomesFormasPagamento.includes(formaEscolhida) ? formaEscolhida : nomesFormasPagamento[0];
   const [dataPagamento, setDataPagamento] = useState('');
   const [preview, setPreview] = useState(null);
   const [enviando, setEnviando] = useState(false);
@@ -75,7 +76,7 @@ export default function NovaReceitaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Receita</Title>
         <Subtitle>Registre uma nova entrada financeira</Subtitle>
@@ -95,7 +96,7 @@ export default function NovaReceitaScreen({ navigation }) {
         {!pendente && (
           <>
             <Label>Forma de Pagamento</Label>
-            <ChipSelect options={FORMAS_PAGAMENTO} value={formaPagamento} onChange={setFormaPagamento} />
+            <ChipSelect options={nomesFormasPagamento} value={formaPagamento} onChange={setFormaPagamento} />
             <Label>Data do Recebimento</Label>
             <Input placeholder="DD/MM/AAAA (padrão: mesma data acima)" value={dataPagamento} onChangeText={setDataPagamento} />
 

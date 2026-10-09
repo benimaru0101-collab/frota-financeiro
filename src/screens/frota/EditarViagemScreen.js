@@ -25,7 +25,7 @@ export default function EditarViagemScreen({ route, navigation }) {
 
   if (!viagem) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Viagem não encontrada</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

@@ -31,7 +31,7 @@ export default function FiltrosRelatorioScreen({ route, navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Filtros do Relatório</Title>
         <Subtitle>Ajuste o período, tipo, categoria e conta</Subtitle>
