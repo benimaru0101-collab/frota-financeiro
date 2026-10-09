@@ -1,13 +1,25 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { colors, spacing, radius } from '../theme/colors';
 
-export function Screen({ children, style }) {
+// `scroll`: formulários longos (ex.: com prévia do comprovante) passam a
+// rolar, para o botão Salvar nunca ficar escondido atrás da barra de abas.
+export function Screen({ children, style, scroll = false }) {
   return (
     <SafeAreaView style={[styles.screen, style]} edges={['top', 'bottom']}>
-      {children}
+      {scroll ? (
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: spacing.xl }}
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        children
+      )}
     </SafeAreaView>
   );
 }

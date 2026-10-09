@@ -77,7 +77,7 @@ export default function NovaDividaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Dívida / Financiamento</Title>
         <Subtitle>As parcelas são criadas automaticamente como despesas "Pendente"</Subtitle>

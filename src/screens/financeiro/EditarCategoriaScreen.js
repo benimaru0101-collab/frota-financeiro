@@ -24,7 +24,7 @@ export default function EditarCategoriaScreen({ route, navigation }) {
 
   if (!categoria) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Categoria não encontrada</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

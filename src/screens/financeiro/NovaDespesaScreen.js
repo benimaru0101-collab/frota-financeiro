@@ -83,7 +83,7 @@ export default function NovaDespesaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Despesa</Title>
         <Subtitle>Registre uma nova saída financeira</Subtitle>

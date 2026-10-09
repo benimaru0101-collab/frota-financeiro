@@ -36,7 +36,7 @@ export default function NovaViagemScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Viagem</Title>
         <Subtitle>Registre uma viagem realizada</Subtitle>

@@ -30,7 +30,7 @@ export default function NovaContaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Conta</Title>
         <Subtitle>Cadastre uma conta bancária ou de caixa</Subtitle>

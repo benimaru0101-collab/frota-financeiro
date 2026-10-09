@@ -76,7 +76,7 @@ export default function NovaReceitaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Receita</Title>
         <Subtitle>Registre uma nova entrada financeira</Subtitle>
