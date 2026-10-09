@@ -938,8 +938,13 @@ export function DataProvider({ children }) {
   // Totais derivados dos dados reais em memória — substituem os
   // números fixos que existiam antes só para preencher a UI.
   const resumo = useMemo(() => {
-    const totalReceitas = receitas.reduce((soma, r) => soma + parseValorBR(r.valor), 0);
-    const totalDespesas = despesas.reduce((soma, d) => soma + parseValorBR(d.valor), 0);
+    // "do Mês" = só lançamentos com data no mês corrente. Parcelas
+    // futuras de dívidas entram na Projeção de Caixa, não aqui.
+    const hoje = new Date();
+    const chaveMesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    const doMesAtual = (item) => chaveDoMes(item.data) === chaveMesAtual;
+    const totalReceitas = receitas.filter(doMesAtual).reduce((soma, r) => soma + parseValorBR(r.valor), 0);
+    const totalDespesas = despesas.filter(doMesAtual).reduce((soma, d) => soma + parseValorBR(d.valor), 0);
     const veiculosAtivos = veiculos.filter((v) => v.status === 'Ativo').length;
 
     // Motor de Saldo: Saldo Atual só soma o que já foi de fato pago ou
