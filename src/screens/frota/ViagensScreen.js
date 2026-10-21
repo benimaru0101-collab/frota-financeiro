@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react
 import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
+import StatusViagem from '../motorista/StatusViagem';
 
 export default function ViagensScreen({ navigation }) {
   const { viagens, deleteViagem } = useData();
@@ -38,10 +39,13 @@ export default function ViagensScreen({ navigation }) {
             onLongPress={() => confirmarExclusao(item)}
           >
             <Card style={styles.item}>
-              <Text style={styles.rota}>{item.origemDestino}</Text>
+              <View style={styles.linha}>
+                <Text style={[styles.rota, { flex: 1 }]}>{item.origemDestino}</Text>
+                {item.status ? <StatusViagem status={item.status} /> : null}
+              </View>
               <Text style={styles.motorista}>{item.motorista ?? 'Motorista não informado'}</Text>
               <View style={styles.linha}>
-                <Text style={styles.meta}>{item.placa} · {item.data}</Text>
+                <Text style={styles.meta}>{item.placa} · {item.data}{item.comprovanteUrl ? ' · 📎 comprovante' : ''}</Text>
                 <Text style={styles.valor}>{item.valor}</Text>
               </View>
             </Card>

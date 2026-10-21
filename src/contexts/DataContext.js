@@ -42,6 +42,8 @@ function viagemDaLinha(l) {
     motorista: l.motoristas?.nome ?? '',
     data: dataISOParaBR(l.data_viagem),
     valor: formatValorBR(Number(l.valor)),
+    status: l.status ?? '',
+    comprovanteUrl: l.comprovante_url ?? null,
   };
 }
 
