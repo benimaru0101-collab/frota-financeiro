@@ -14,5 +14,13 @@ npm-debug.*
 *.p12
 *.key
 *.mobileprovision
-android/
 ios/
+
+# Pasta android/ agora e versionada (tem a configuracao dos 2 apps:
+# ADM e Motorista). Saidas de build ficam fora (android/.gitignore).
+
+# APKs gerados e arquivos locais de apoio
+apk/
+*.apk
+*-log.txt
+_local/

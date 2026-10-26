@@ -3,6 +3,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
 import { supabase } from '../lib/supabase';
+import { demo } from '../lib/demo';
+import { APP } from '../config/app';
+import { ehErroDeRede, salvarCache, lerCache, marcarOnline } from '../lib/offline';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -32,6 +35,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
+  // Incrementar força buscar o papel de novo (ex.: depois de aprovado).
+  const [versaoPerfil, setVersaoPerfil] = useState(0);
 
   useEffect(() => {
     // Ao abrir o app, o Supabase tenta restaurar a sessão salva
@@ -51,6 +56,7 @@ export function AuthProvider({ children }) {
       });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (demo.ativo()) return; // modo demonstração não depende do Supabase
       setSession(newSession);
     });
 
@@ -71,6 +77,10 @@ export function AuthProvider({ children }) {
       setRole(null);
       return;
     }
+    if (demo.ativo()) {
+      setRole('motorista');
+      return;
+    }
 
     (async () => {
       setCarregandoPerfil(true);
@@ -83,7 +93,9 @@ export function AuthProvider({ children }) {
         if (erroSelect) throw erroSelect;
 
         if (perfilExistente) {
-          if (!cancelado) setRole(perfilExistente.role ?? 'administrador');
+          const papel = perfilExistente.role ?? 'administrador';
+          salvarCache(`papel_${usuario.id}`, papel); // para abrir sem internet
+          if (!cancelado) setRole(papel);
           return;
         }
 
@@ -93,16 +105,29 @@ export function AuthProvider({ children }) {
             id: usuario.id,
             nome: usuario.user_metadata?.full_name ?? null,
             email: usuario.email ?? null,
+            // Conta criada pelo app do Motorista já nasce motorista; pelo
+            // app ADM nasce 'pendente' (padrão do banco, migration-12) e
+            // só vira administrador quando outro administrador aprovar.
+            ...(APP.papel === 'motorista' ? { role: 'motorista' } : {}),
           })
           .select('role')
           .single();
         if (erroInsert) throw erroInsert;
-        if (!cancelado) setRole(perfilCriado?.role ?? 'administrador');
+        if (!cancelado) setRole(perfilCriado?.role ?? (APP.papel === 'motorista' ? 'motorista' : 'pendente'));
       } catch (erro) {
         console.warn('Não foi possível carregar/criar o perfil (role):', erro?.message);
-        // Não trava o app se o perfil falhar ao carregar — assume
-        // administrador como fallback seguro para não quebrar a demo.
-        if (!cancelado) setRole('administrador');
+        // Sem internet: usa o último papel conhecido neste aparelho.
+        if (ehErroDeRede(erro)) {
+          const cache = await lerCache(`papel_${usuario.id}`);
+          if (cache?.dados) {
+            marcarOnline(false);
+            if (!cancelado) setRole(cache.dados);
+            return;
+          }
+        }
+        // Se o perfil não carregar, não libera o painel do ADM:
+        // trata como pendente (o motorista segue como motorista).
+        if (!cancelado) setRole(APP.papel === 'motorista' ? 'motorista' : 'pendente');
       } finally {
         if (!cancelado) setCarregandoPerfil(false);
       }
@@ -111,14 +136,14 @@ export function AuthProvider({ children }) {
     return () => {
       cancelado = true;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, versaoPerfil]);
 
   // Fluxo OAuth2 NATIVO do Google (Authorization Code + PKCE via
   // expo-auth-session), conforme pedido na atividade — nada de
   // formulário manual pedindo email/senha do Google.
   async function signInWithGoogle() {
     const redirectUri = AuthSession.makeRedirectUri({
-      scheme: 'frotafinanceiro',
+      scheme: APP.scheme,
     });
 
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -179,7 +204,18 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   }
 
+  // Entra no app do motorista com dados de exemplo (sem banco/internet).
+  function entrarDemoMotorista() {
+    demo.ligar();
+    setSession({ user: demo.usuario() });
+  }
+
   async function signOut() {
+    if (demo.ativo()) {
+      demo.desligar();
+      setSession(null);
+      return;
+    }
     await supabase.auth.signOut();
     setSession(null);
   }
@@ -196,6 +232,8 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     signUpWithEmail,
     sendPasswordReset,
+    entrarDemoMotorista,
+    recarregarPapel: () => setVersaoPerfil((v) => v + 1),
     signOut,
   };
 

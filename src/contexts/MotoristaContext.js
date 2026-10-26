@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { buscarMeuCadastro, buscarMinhasViagens } from '../lib/motorista';
+import { aoSincronizar } from '../lib/offline';
 
 // Estado do App do Motorista: o cadastro ligado à conta logada e as
 // viagens dele. Separado do DataContext do administrador, que carrega
@@ -33,9 +34,22 @@ export function MotoristaProvider({ children }) {
     recarregar();
   }, [recarregar]);
 
-  // Troca uma viagem da lista pela versão que o banco devolveu.
+  // Fila offline enviada -> busca a versão oficial das viagens.
+  useEffect(() => aoSincronizar(({ enviadas }) => {
+    if (enviadas > 0) recarregar();
+  }), [recarregar]);
+
+  // Troca uma viagem da lista pela versão que o banco devolveu. Se o
+  // hodômetro do veículo mudou (viagem finalizada), as outras viagens do
+  // mesmo veículo passam a sugerir o KM novo.
   function substituirViagem(linha) {
-    setViagens((atual) => atual.map((v) => (v.id === linha.id ? linha : v)));
+    setViagens((atual) =>
+      atual.map((v) => {
+        if (v.id === linha.id) return linha;
+        if (linha.veiculos?.id && v.veiculos?.id === linha.veiculos.id) return { ...v, veiculos: { ...v.veiculos, ...linha.veiculos } };
+        return v;
+      })
+    );
   }
 
   return (

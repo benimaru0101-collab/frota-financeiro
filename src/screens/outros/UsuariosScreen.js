@@ -66,40 +66,49 @@ export default function UsuariosScreen() {
   }, [carregar]);
 
   function trocarPapel(item) {
+    const quem = item.nome || item.email || 'este usuário';
+    if (item.role === 'pendente') {
+      Alert.alert('Aprovar conta', `${quem} pediu acesso pelo app ADM. Aprovar como:`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Motorista', onPress: () => aplicarPapel(item, 'motorista') },
+        { text: 'Administrador', onPress: () => aplicarPapel(item, 'administrador') },
+      ]);
+      return;
+    }
     const novo = item.role === 'motorista' ? 'administrador' : 'motorista';
     const rotulo = novo === 'administrador' ? 'Administrador' : 'Motorista';
     const ehVoce = item.id === user?.id;
     Alert.alert(
       'Alterar papel',
-      `Mudar ${item.nome || item.email || 'este usuário'} para ${rotulo}?` +
+      `Mudar ${quem} para ${rotulo}?` +
         (ehVoce && novo === 'motorista' ? '\n\nAtenção: você perderá o acesso ao Financeiro.' : ''),
       [
         { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Alterar',
-          onPress: async () => {
-            setSalvandoId(item.id);
-            const { error } = await supabase.from('profiles').update({ role: novo }).eq('id', item.id);
-            setSalvandoId(null);
-            if (error) {
-              Alert.alert('Não foi possível alterar', error.message);
-              return;
-            }
-            setUsuarios((atual) => atual.map((u) => (u.id === item.id ? { ...u, role: novo } : u)));
-            if (ehVoce) {
-              Alert.alert('Papel alterado', 'Feche e abra o app para ver o menu do novo papel.');
-            }
-          },
-        },
+        { text: 'Alterar', onPress: () => aplicarPapel(item, novo) },
       ]
     );
+  }
+
+  async function aplicarPapel(item, novo) {
+    const ehVoce = item.id === user?.id;
+    setSalvandoId(item.id);
+    const { error } = await supabase.from('profiles').update({ role: novo }).eq('id', item.id);
+    setSalvandoId(null);
+    if (error) {
+      Alert.alert('Não foi possível alterar', error.message);
+      return;
+    }
+    setUsuarios((atual) => atual.map((u) => (u.id === item.id ? { ...u, role: novo } : u)));
+    if (ehVoce) {
+      Alert.alert('Papel alterado', 'Feche e abra o app para ver o menu do novo papel.');
+    }
   }
 
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Usuários e Papéis</Title>
-        <Subtitle>Toque em um usuário para alternar o papel · motoristas: ligue a conta ao cadastro</Subtitle>
+        <Subtitle>Toque em um usuário para aprovar ou trocar o papel · motoristas: ligue a conta ao cadastro</Subtitle>
       </View>
       {carregando && usuarios.length === 0 ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
@@ -122,8 +131,8 @@ export default function UsuariosScreen() {
                 {salvandoId === item.id ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <View style={[styles.pill, { backgroundColor: item.role === 'motorista' ? colors.info : colors.primary }]}>
-                    <Text style={styles.pillTexto}>{item.role === 'motorista' ? 'Motorista' : 'Administrador'}</Text>
+                  <View style={[styles.pill, { backgroundColor: COR_PAPEL[item.role] ?? colors.primary }]}>
+                    <Text style={styles.pillTexto}>{ROTULO_PAPEL[item.role] ?? 'Administrador'}</Text>
                   </View>
                 )}
               </Card>
@@ -145,6 +154,9 @@ export default function UsuariosScreen() {
 }
 
 const NENHUM = 'Nenhum';
+
+const ROTULO_PAPEL = { administrador: 'Administrador', motorista: 'Motorista', pendente: 'Pendente · aprovar' };
+const COR_PAPEL = { administrador: colors.primary, motorista: colors.info, pendente: colors.danger };
 
 function VinculoMotorista({ usuario, motoristas, aberto, onAbrir, onEscolher }) {
   const atual = motoristas.find((m) => m.user_id === usuario.id);

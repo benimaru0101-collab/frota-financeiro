@@ -49,7 +49,7 @@ export default function ReceitasScreen({ navigation }) {
                 <View style={styles.linhaMeta}>
                   {item.data ? <Text style={styles.data}>{item.data}</Text> : null}
                   <View style={[styles.pill, { backgroundColor: item.status === 'pendente' ? colors.primary : colors.success }]}>
-                    <Text style={styles.pillTexto}>{item.statusLabel}</Text>
+                    <Text style={styles.pillTexto}>{item.statusLabel}{item.pendenteEnvio ? ' · ⏳' : ''}</Text>
                   </View>
                 </View>
               </View>

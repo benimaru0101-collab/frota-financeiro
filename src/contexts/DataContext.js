@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import { parseValorBR, formatValorBR } from '../utils/money';
 import { dataBRParaISO, dataISOParaBR, separarOrigemDestino, chaveDoMes, rotuloDoMes } from '../utils/data';
 import { reagendarNotificacoesVencimento, cancelarNotificacoesVencimento } from '../lib/notifications';
+import { ehErroDeRede, enfileirar, marcarOnline, novoId, registrarExecutor, salvarCache, lerCache, aoSincronizar } from '../lib/offline';
 
 // Mesma chave usada em ConfiguracoesScreen — lida aqui só pra saber se
 // o usuário quer as notificações de vencimento ligadas ou não.
@@ -38,12 +39,19 @@ function viagemDaLinha(l) {
   return {
     id: l.id,
     origemDestino: `${l.origem} - ${l.destino}`,
+    origem: l.origem,
+    destino: l.destino,
+    dataISO: l.data_viagem,
     placa: l.veiculos?.placa ?? '',
     motorista: l.motoristas?.nome ?? '',
     data: dataISOParaBR(l.data_viagem),
     valor: formatValorBR(Number(l.valor)),
     status: l.status ?? '',
     comprovanteUrl: l.comprovante_url ?? null,
+    // Hodômetro (migration-13): números, ou null se ainda não informado.
+    kmInicial: l.km_inicial != null ? Number(l.km_inicial) : null,
+    kmFinal: l.km_final != null ? Number(l.km_final) : null,
+    kmRodados: l.km_inicial != null && l.km_final != null ? Number(l.km_final) - Number(l.km_inicial) : null,
   };
 }
 
@@ -160,6 +168,34 @@ function formaPagamentoDaLinha(l) {
   };
 }
 
+async function obterCategoriaDespesaId(nome) {
+  const { data: existente, error: erroSelect } = await supabase
+    .from('categorias_financeiras')
+    .select('id')
+    .eq('nome', nome)
+    .eq('tipo', 'despesa')
+    .maybeSingle();
+  if (erroSelect) throw erroSelect;
+  if (existente) return existente.id;
+
+  const { data: criada, error: erroInsert } = await supabase
+    .from('categorias_financeiras')
+    .insert({ nome, tipo: 'despesa' })
+    .select('id')
+    .single();
+  if (erroInsert) throw erroInsert;
+  return criada.id;
+}
+
+// Despesa criada offline: a categoria é resolvida (ou criada) só na
+// hora do envio, porque isso também precisa do banco.
+registrarExecutor('despesaInsert', async ({ linha, categoriaNome }) => {
+  const categoriaId = await obterCategoriaDespesaId(categoriaNome);
+  const { error } = await supabase.from('despesas').insert({ ...linha, categoria_id: categoriaId });
+  if (error && error.code === '23505') return;
+  if (error) throw error;
+});
+
 function avisarErro(operacao, error) {
   console.warn(`Erro ao ${operacao}:`, error?.message);
   Alert.alert('Ocorreu um erro', error?.message || `Não foi possível ${operacao}. Verifique sua conexão e tente novamente.`);
@@ -182,6 +218,9 @@ export function DataProvider({ children }) {
   const [formasPagamento, setFormasPagamento] = useState([]);
   const [hidratado, setHidratado] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  const [versaoDados, setVersaoDados] = useState(0);
+  // Data/hora da cópia local em uso quando o app abriu sem internet.
+  const [dadosDoCache, setDadosDoCache] = useState(null);
 
   const userId = session?.user?.id ?? null;
 
@@ -254,17 +293,15 @@ export function DataProvider({ children }) {
         if (erroDividas) throw erroDividas;
 
         if (cancelado) return;
-        setVeiculos((veiculosData ?? []).map(veiculoDaLinha));
-        setMotoristas((motoristasData ?? []).map(motoristaDaLinha));
-        setViagens((viagensData ?? []).map(viagemDaLinha));
-        setAbastecimentos((abastecimentosData ?? []).map(abastecimentoDaLinha));
-        setManutencoes((manutencoesData ?? []).map(manutencaoDaLinha));
-        setDocumentos((documentosData ?? []).map(documentoDaLinha));
-        setReceitas((receitasData ?? []).map(receitaDaLinha));
-        setDespesas((despesasData ?? []).map(despesaDaLinha));
-        setContas((contasData ?? []).map(contaDaLinha));
-        setCategorias((categoriasData ?? []).map(categoriaDaLinha));
-        setDividas((dividasData ?? []).map(dividaDaLinha));
+        const bruto = {
+          veiculosData, motoristasData, viagensData, abastecimentosData, manutencoesData,
+          documentosData, receitasData, despesasData, contasData, categoriasData, dividasData,
+        };
+        aplicarBruto(bruto);
+        marcarOnline(true);
+        setDadosDoCache(null);
+        // Cópia local para abrir o app sem internet (resiliência offline).
+        salvarCache(`adm_${userId}`, bruto);
 
         // Formas de pagamento carregam à parte: se a migration-10 ainda
         // não foi aplicada, o app segue com a lista padrão em vez de
@@ -280,7 +317,18 @@ export function DataProvider({ children }) {
         }
       } catch (erro) {
         console.warn('Não foi possível carregar os dados do Supabase:', erro?.message);
-        Alert.alert('Erro ao carregar dados', erro?.message ?? 'Verifique sua conexão e tente novamente.');
+        // Sem internet: abre com a última cópia salva no aparelho.
+        const cache = ehErroDeRede(erro) ? await lerCache(`adm_${userId}`) : null;
+        if (cache && !cancelado) {
+          aplicarBruto(cache.dados);
+          setDadosDoCache(cache.salvoEm);
+          marcarOnline(false);
+        } else if (ehErroDeRede(erro)) {
+          marcarOnline(false);
+          Alert.alert('Sem conexão', 'Não há dados salvos neste aparelho ainda. Conecte-se à internet para o primeiro acesso.');
+        } else {
+          Alert.alert('Erro ao carregar dados', erro?.message ?? 'Verifique sua conexão e tente novamente.');
+        }
       } finally {
         if (!cancelado) {
           setHidratado(true);
@@ -292,7 +340,33 @@ export function DataProvider({ children }) {
     return () => {
       cancelado = true;
     };
-  }, [userId]);
+  }, [userId, versaoDados]);
+
+  // Quando a fila offline termina de ser enviada, recarrega tudo do
+  // banco para a tela mostrar a versão oficial (ids, joins, triggers).
+  useEffect(() => aoSincronizar(({ enviadas, descartadas }) => {
+    if (descartadas.length > 0) {
+      Alert.alert(
+        'Alguns lançamentos não foram enviados',
+        descartadas.map((d) => `• ${d.op.descricao ?? d.op.tipo}: ${d.erro}`).join('\n')
+      );
+    }
+    if (enviadas > 0 || descartadas.length > 0) setVersaoDados((v) => v + 1);
+  }), []);
+
+  function aplicarBruto(b) {
+    setVeiculos((b.veiculosData ?? []).map(veiculoDaLinha));
+    setMotoristas((b.motoristasData ?? []).map(motoristaDaLinha));
+    setViagens((b.viagensData ?? []).map(viagemDaLinha));
+    setAbastecimentos((b.abastecimentosData ?? []).map(abastecimentoDaLinha));
+    setManutencoes((b.manutencoesData ?? []).map(manutencaoDaLinha));
+    setDocumentos((b.documentosData ?? []).map(documentoDaLinha));
+    setReceitas((b.receitasData ?? []).map(receitaDaLinha));
+    setDespesas((b.despesasData ?? []).map(despesaDaLinha));
+    setContas((b.contasData ?? []).map(contaDaLinha));
+    setCategorias((b.categoriasData ?? []).map(categoriaDaLinha));
+    setDividas((b.dividasData ?? []).map(dividaDaLinha));
+  }
 
   // Notificações de vencimento: sempre que a lista de documentos muda
   // (carregou do Supabase, ou o usuário cadastrou/editou/excluiu um),
@@ -326,6 +400,22 @@ export function DataProvider({ children }) {
     setter((atual) => atual.filter((item) => item.id !== id));
   }
 
+  // Grava no Supabase; se faltar internet, guarda na fila offline e já
+  // mostra a alteração na tela (o item fica marcado "aguardando envio").
+  async function gravar({ operacao, online, fila, local }) {
+    try {
+      await online();
+      marcarOnline(true);
+    } catch (erro) {
+      if (ehErroDeRede(erro)) {
+        await enfileirar({ ...fila, descricao: operacao });
+        local();
+        return;
+      }
+      avisarErro(operacao, erro);
+    }
+  }
+
   function idDoVeiculo(placa) {
     return veiculos.find((v) => v.placa === placa)?.id ?? null;
   }
@@ -336,24 +426,7 @@ export function DataProvider({ children }) {
   // categorias_financeiras não tem tela própria ainda — as despesas
   // usam um conjunto fixo de nomes (ver NovaDespesaScreen), então aqui
   // buscamos a categoria pelo nome e criamos na hora se ainda não existir.
-  async function obterCategoriaDespesaId(nome) {
-    const { data: existente, error: erroSelect } = await supabase
-      .from('categorias_financeiras')
-      .select('id')
-      .eq('nome', nome)
-      .eq('tipo', 'despesa')
-      .maybeSingle();
-    if (erroSelect) throw erroSelect;
-    if (existente) return existente.id;
-
-    const { data: criada, error: erroInsert } = await supabase
-      .from('categorias_financeiras')
-      .insert({ nome, tipo: 'despesa' })
-      .select('id')
-      .single();
-    if (erroInsert) throw erroInsert;
-    return criada.id;
-  }
+  // obterCategoriaDespesaId: ver função no topo do arquivo (usada também pela fila offline).
 
   async function addVeiculo(item) {
     try {
@@ -440,74 +513,93 @@ export function DataProvider({ children }) {
   }
 
   async function addViagem(item) {
-    try {
-      const { origem, destino } = separarOrigemDestino(item.origemDestino);
-      const { data, error } = await supabase
-        .from('viagens')
-        .insert({
-          veiculo_id: idDoVeiculo(item.placa),
-          motorista_id: idDoMotorista(item.motorista),
-          origem,
-          destino,
-          data_viagem: dataBRParaISO(item.data),
-          valor: parseValorBR(item.valor),
-        })
-        .select('*, veiculos(placa), motoristas(nome)')
-        .single();
-      if (error) throw error;
-      setViagens((atual) => [viagemDaLinha(data), ...atual]);
-    } catch (erro) {
-      avisarErro('registrar a viagem', erro);
-    }
+    const { origem, destino } = separarOrigemDestino(item.origemDestino);
+    const linha = {
+      id: novoId(),
+      veiculo_id: idDoVeiculo(item.placa),
+      motorista_id: idDoMotorista(item.motorista),
+      origem,
+      destino,
+      data_viagem: dataBRParaISO(item.data),
+      valor: parseValorBR(item.valor),
+    };
+    await gravar({
+      operacao: 'registrar a viagem',
+      online: async () => {
+        const { data, error } = await supabase.from('viagens').insert(linha).select('*, veiculos(placa), motoristas(nome)').single();
+        if (error) throw error;
+        setViagens((atual) => [viagemDaLinha(data), ...atual]);
+      },
+      fila: { tipo: 'insert', tabela: 'viagens', linha },
+      local: () => setViagens((atual) => [{ ...viagemDaLinha({ ...linha, status: 'Agendada', veiculos: { placa: item.placa }, motoristas: { nome: item.motorista } }), pendenteEnvio: true }, ...atual]),
+    });
   }
 
   async function updateViagem(id, alteracoes) {
-    try {
-      const patch = {};
-      if (alteracoes.origemDestino !== undefined) {
-        const { origem, destino } = separarOrigemDestino(alteracoes.origemDestino);
-        patch.origem = origem;
-        patch.destino = destino;
-      }
-      if (alteracoes.placa !== undefined) patch.veiculo_id = idDoVeiculo(alteracoes.placa);
-      if (alteracoes.motorista !== undefined) patch.motorista_id = idDoMotorista(alteracoes.motorista);
-      if (alteracoes.data !== undefined) patch.data_viagem = dataBRParaISO(alteracoes.data);
-      if (alteracoes.valor !== undefined) patch.valor = parseValorBR(alteracoes.valor);
-      const { error } = await supabase.from('viagens').update(patch).eq('id', id);
-      if (error) throw error;
-      updatePorId(setViagens, id, alteracoes);
-    } catch (erro) {
-      avisarErro('atualizar a viagem', erro);
+    const patch = {};
+    if (alteracoes.origemDestino !== undefined) {
+      const { origem, destino } = separarOrigemDestino(alteracoes.origemDestino);
+      patch.origem = origem;
+      patch.destino = destino;
     }
+    if (alteracoes.placa !== undefined) patch.veiculo_id = idDoVeiculo(alteracoes.placa);
+    if (alteracoes.motorista !== undefined) patch.motorista_id = idDoMotorista(alteracoes.motorista);
+    if (alteracoes.data !== undefined) patch.data_viagem = dataBRParaISO(alteracoes.data);
+    if (alteracoes.valor !== undefined) patch.valor = parseValorBR(alteracoes.valor);
+    if (alteracoes.kmInicial !== undefined) patch.km_inicial = alteracoes.kmInicial;
+    if (alteracoes.kmFinal !== undefined) patch.km_final = alteracoes.kmFinal;
+    const aplicar = () =>
+      setViagens((atual) =>
+        atual.map((v) => {
+          if (v.id !== id) return v;
+          const novo = { ...v, ...alteracoes };
+          novo.kmRodados = novo.kmInicial != null && novo.kmFinal != null ? novo.kmFinal - novo.kmInicial : null;
+          return novo;
+        })
+      );
+    await gravar({
+      operacao: 'atualizar a viagem',
+      online: async () => {
+        const { error } = await supabase.from('viagens').update(patch).eq('id', id);
+        if (error) throw error;
+        aplicar();
+      },
+      fila: { tipo: 'update', tabela: 'viagens', id, patch },
+      local: aplicar,
+    });
   }
 
   async function deleteViagem(id) {
-    try {
-      const { error } = await supabase.from('viagens').delete().eq('id', id);
-      if (error) throw error;
-      removerPorId(setViagens, id);
-    } catch (erro) {
-      avisarErro('excluir a viagem', erro);
-    }
+    await gravar({
+      operacao: 'excluir a viagem',
+      online: async () => {
+        const { error } = await supabase.from('viagens').delete().eq('id', id);
+        if (error) throw error;
+        removerPorId(setViagens, id);
+      },
+      fila: { tipo: 'delete', tabela: 'viagens', id },
+      local: () => removerPorId(setViagens, id),
+    });
   }
 
   async function addAbastecimento(item) {
-    try {
-      const { data, error } = await supabase
-        .from('abastecimentos')
-        .insert({
-          veiculo_id: idDoVeiculo(item.placa),
-          litros: parseValorBR(item.litros),
-          valor: parseValorBR(item.valor),
-          data_abastecimento: dataBRParaISO(item.data),
-        })
-        .select('*, veiculos(placa)')
-        .single();
-      if (error) throw error;
-      setAbastecimentos((atual) => [abastecimentoDaLinha(data), ...atual]);
-    } catch (erro) {
-      avisarErro('registrar o abastecimento', erro);
-    }
+    const linha = {
+      id: novoId(),
+      veiculo_id: idDoVeiculo(item.placa),
+      litros: parseValorBR(item.litros),
+      valor: parseValorBR(item.valor),
+      data_abastecimento: dataBRParaISO(item.data),
+    };
+    await gravar({
+      operacao: 'registrar o abastecimento',
+      online: async () => {
+        const { data, error } = await supabase.from('abastecimentos').insert(linha).select('*, veiculos(placa)').single();
+        if (error) throw error;
+        setAbastecimentos((atual) => [abastecimentoDaLinha(data), ...atual]);
+      },
+      fila: { tipo: 'insert', tabela: 'abastecimentos', linha },
+      local: () => setAbastecimentos((atual) => [{ ...abastecimentoDaLinha({ ...linha, veiculos: { placa: item.placa } }), pendenteEnvio: true }, ...atual]),
+    });
   }
 
   async function updateAbastecimento(id, alteracoes) {
@@ -526,32 +618,36 @@ export function DataProvider({ children }) {
   }
 
   async function deleteAbastecimento(id) {
-    try {
-      const { error } = await supabase.from('abastecimentos').delete().eq('id', id);
-      if (error) throw error;
-      removerPorId(setAbastecimentos, id);
-    } catch (erro) {
-      avisarErro('excluir o abastecimento', erro);
-    }
+    await gravar({
+      operacao: 'excluir o abastecimento',
+      online: async () => {
+        const { error } = await supabase.from('abastecimentos').delete().eq('id', id);
+        if (error) throw error;
+        removerPorId(setAbastecimentos, id);
+      },
+      fila: { tipo: 'delete', tabela: 'abastecimentos', id },
+      local: () => removerPorId(setAbastecimentos, id),
+    });
   }
 
   async function addManutencao(item) {
-    try {
-      const { data, error } = await supabase
-        .from('manutencoes')
-        .insert({
-          veiculo_id: idDoVeiculo(item.placa),
-          tipo: item.tipo,
-          valor: parseValorBR(item.valor),
-          data_manutencao: dataBRParaISO(item.data),
-        })
-        .select('*, veiculos(placa)')
-        .single();
-      if (error) throw error;
-      setManutencoes((atual) => [manutencaoDaLinha(data), ...atual]);
-    } catch (erro) {
-      avisarErro('registrar a manutenção', erro);
-    }
+    const linha = {
+      id: novoId(),
+      veiculo_id: idDoVeiculo(item.placa),
+      tipo: item.tipo,
+      valor: parseValorBR(item.valor),
+      data_manutencao: dataBRParaISO(item.data),
+    };
+    await gravar({
+      operacao: 'registrar a manutenção',
+      online: async () => {
+        const { data, error } = await supabase.from('manutencoes').insert(linha).select('*, veiculos(placa)').single();
+        if (error) throw error;
+        setManutencoes((atual) => [manutencaoDaLinha(data), ...atual]);
+      },
+      fila: { tipo: 'insert', tabela: 'manutencoes', linha },
+      local: () => setManutencoes((atual) => [{ ...manutencaoDaLinha({ ...linha, veiculos: { placa: item.placa } }), pendenteEnvio: true }, ...atual]),
+    });
   }
 
   async function updateManutencao(id, alteracoes) {
@@ -570,13 +666,16 @@ export function DataProvider({ children }) {
   }
 
   async function deleteManutencao(id) {
-    try {
-      const { error } = await supabase.from('manutencoes').delete().eq('id', id);
-      if (error) throw error;
-      removerPorId(setManutencoes, id);
-    } catch (erro) {
-      avisarErro('excluir a manutenção', erro);
-    }
+    await gravar({
+      operacao: 'excluir a manutenção',
+      online: async () => {
+        const { error } = await supabase.from('manutencoes').delete().eq('id', id);
+        if (error) throw error;
+        removerPorId(setManutencoes, id);
+      },
+      fila: { tipo: 'delete', tabela: 'manutencoes', id },
+      local: () => removerPorId(setManutencoes, id),
+    });
   }
 
   async function addDocumento(item) {
@@ -624,124 +723,145 @@ export function DataProvider({ children }) {
   }
 
   async function addReceita(item) {
-    try {
-      const status = item.status === 'pendente' ? 'pendente' : 'concluido';
-      const { data, error } = await supabase
-        .from('receitas')
-        .insert({
-          descricao: item.descricao,
-          valor: parseValorBR(item.valor),
-          data_receita: dataBRParaISO(item.data),
-          status,
-          data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
-          forma_pagamento: item.formaPagamento || null,
-          comprovante_url: item.comprovanteUrl || null,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setReceitas((atual) => [receitaDaLinha(data), ...atual]);
-    } catch (erro) {
-      avisarErro('registrar a receita', erro);
-    }
+    const status = item.status === 'pendente' ? 'pendente' : 'concluido';
+    const linha = {
+      id: novoId(),
+      descricao: item.descricao,
+      valor: parseValorBR(item.valor),
+      data_receita: dataBRParaISO(item.data),
+      status,
+      data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
+      forma_pagamento: item.formaPagamento || null,
+      comprovante_url: item.comprovanteUrl || null,
+    };
+    await gravar({
+      operacao: 'registrar a receita',
+      online: async () => {
+        const { data, error } = await supabase.from('receitas').insert(linha).select().single();
+        if (error) throw error;
+        setReceitas((atual) => [receitaDaLinha(data), ...atual]);
+      },
+      fila: { tipo: 'insert', tabela: 'receitas', linha },
+      local: () => setReceitas((atual) => [{ ...receitaDaLinha(linha), pendenteEnvio: true }, ...atual]),
+    });
   }
 
   // Marca uma receita como Recebida (ou volta pra Pendente) e/ou
   // atualiza forma de pagamento e comprovante — usado no "toque" do
   // item na lista e na edição do comprovante.
   async function updateReceita(id, alteracoes) {
-    try {
-      const patch = {};
-      if (alteracoes.status !== undefined) {
-        patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
-        patch.data_pagamento = patch.status === 'concluido'
-          ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
-          : null;
-      }
-      if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
-      if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
-      const { error } = await supabase.from('receitas').update(patch).eq('id', id);
-      if (error) throw error;
+    const patch = {};
+    if (alteracoes.status !== undefined) {
+      patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
+      patch.data_pagamento = patch.status === 'concluido'
+        ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
+        : null;
+    }
+    if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
+    if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
+    const aplicar = () =>
       updatePorId(setReceitas, id, {
         ...alteracoes,
         ...(patch.status !== undefined
           ? { status: patch.status, statusLabel: patch.status === 'pendente' ? 'Pendente' : 'Recebido', dataPagamento: dataISOParaBR(patch.data_pagamento) }
           : {}),
       });
-    } catch (erro) {
-      avisarErro('atualizar a receita', erro);
-    }
+    await gravar({
+      operacao: 'atualizar a receita',
+      online: async () => {
+        const { error } = await supabase.from('receitas').update(patch).eq('id', id);
+        if (error) throw error;
+        aplicar();
+      },
+      fila: { tipo: 'update', tabela: 'receitas', id, patch },
+      local: aplicar,
+    });
   }
 
   async function deleteReceita(id) {
-    try {
-      const { error } = await supabase.from('receitas').delete().eq('id', id);
-      if (error) throw error;
-      removerPorId(setReceitas, id);
-    } catch (erro) {
-      avisarErro('excluir a receita', erro);
-    }
+    await gravar({
+      operacao: 'excluir a receita',
+      online: async () => {
+        const { error } = await supabase.from('receitas').delete().eq('id', id);
+        if (error) throw error;
+        removerPorId(setReceitas, id);
+      },
+      fila: { tipo: 'delete', tabela: 'receitas', id },
+      local: () => removerPorId(setReceitas, id),
+    });
   }
 
   async function addDespesa(item) {
-    try {
-      const categoriaId = await obterCategoriaDespesaId(item.categoria);
-      const status = item.status === 'pendente' ? 'pendente' : 'concluido';
-      const { data, error } = await supabase
-        .from('despesas')
-        .insert({
-          descricao: item.descricao,
-          valor: parseValorBR(item.valor),
-          categoria_id: categoriaId,
-          data_despesa: dataBRParaISO(item.data),
-          status,
-          data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
-          forma_pagamento: item.formaPagamento || null,
-          comprovante_url: item.comprovanteUrl || null,
-        })
-        .select('*, categorias_financeiras(nome)')
-        .single();
-      if (error) throw error;
-      setDespesas((atual) => [despesaDaLinha(data), ...atual]);
-    } catch (erro) {
-      avisarErro('registrar a despesa', erro);
-    }
+    const status = item.status === 'pendente' ? 'pendente' : 'concluido';
+    const linha = {
+      id: novoId(),
+      descricao: item.descricao,
+      valor: parseValorBR(item.valor),
+      data_despesa: dataBRParaISO(item.data),
+      status,
+      data_pagamento: status === 'concluido' ? dataBRParaISO(item.dataPagamento || item.data) : null,
+      forma_pagamento: item.formaPagamento || null,
+      comprovante_url: item.comprovanteUrl || null,
+    };
+    await gravar({
+      operacao: 'registrar a despesa',
+      online: async () => {
+        const categoriaId = await obterCategoriaDespesaId(item.categoria);
+        const { data, error } = await supabase
+          .from('despesas')
+          .insert({ ...linha, categoria_id: categoriaId })
+          .select('*, categorias_financeiras(nome)')
+          .single();
+        if (error) throw error;
+        setDespesas((atual) => [despesaDaLinha(data), ...atual]);
+      },
+      fila: { tipo: 'despesaInsert', linha, categoriaNome: item.categoria },
+      local: () => setDespesas((atual) => [{ ...despesaDaLinha({ ...linha, categorias_financeiras: { nome: item.categoria } }), pendenteEnvio: true }, ...atual]),
+    });
   }
 
   // Marca uma despesa como Paga (ou volta pra Pendente) e/ou atualiza
   // forma de pagamento e comprovante.
   async function updateDespesa(id, alteracoes) {
-    try {
-      const patch = {};
-      if (alteracoes.status !== undefined) {
-        patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
-        patch.data_pagamento = patch.status === 'concluido'
-          ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
-          : null;
-      }
-      if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
-      if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
-      const { error } = await supabase.from('despesas').update(patch).eq('id', id);
-      if (error) throw error;
+    const patch = {};
+    if (alteracoes.status !== undefined) {
+      patch.status = alteracoes.status === 'pendente' ? 'pendente' : 'concluido';
+      patch.data_pagamento = patch.status === 'concluido'
+        ? dataBRParaISO(alteracoes.dataPagamento || new Date().toLocaleDateString('pt-BR'))
+        : null;
+    }
+    if (alteracoes.formaPagamento !== undefined) patch.forma_pagamento = alteracoes.formaPagamento || null;
+    if (alteracoes.comprovanteUrl !== undefined) patch.comprovante_url = alteracoes.comprovanteUrl || null;
+    const aplicar = () =>
       updatePorId(setDespesas, id, {
         ...alteracoes,
         ...(patch.status !== undefined
           ? { status: patch.status, statusLabel: patch.status === 'pendente' ? 'Pendente' : 'Pago', dataPagamento: dataISOParaBR(patch.data_pagamento) }
           : {}),
       });
-    } catch (erro) {
-      avisarErro('atualizar a despesa', erro);
-    }
+    await gravar({
+      operacao: 'atualizar a despesa',
+      online: async () => {
+        const { error } = await supabase.from('despesas').update(patch).eq('id', id);
+        if (error) throw error;
+        aplicar();
+      },
+      fila: { tipo: 'update', tabela: 'despesas', id, patch },
+      local: aplicar,
+    });
   }
 
   async function deleteDespesa(id) {
-    try {
-      const { error } = await supabase.from('despesas').delete().eq('id', id);
-      if (error) throw error;
-      removerPorId(setDespesas, id);
-    } catch (erro) {
-      avisarErro('excluir a despesa', erro);
-    }
+    await gravar({
+      operacao: 'excluir a despesa',
+      online: async () => {
+        const { error } = await supabase.from('despesas').delete().eq('id', id);
+        if (error) throw error;
+        removerPorId(setDespesas, id);
+      },
+      fila: { tipo: 'delete', tabela: 'despesas', id },
+      local: () => removerPorId(setDespesas, id),
+    });
   }
 
   async function addConta(item) {
@@ -991,7 +1111,48 @@ export function DataProvider({ children }) {
         saldoProjetado: formatValorBR(grupo.receitas - grupo.despesas),
       }));
 
+    // Desempenho operacional (Dashboard de lucro e custo por KM):
+    // receita = fretes das viagens concluídas; custo = abastecimentos +
+    // manutenções; KM = soma dos KM rodados (hodômetro da viagem).
+    function desempenho(filtro) {
+      const concluidas = viagens.filter((v) => v.status === 'Concluída' && filtro(v));
+      const abast = abastecimentos.filter(filtro);
+      const manut = manutencoes.filter(filtro);
+      const placas = new Set([...concluidas, ...abast, ...manut].map((x) => x.placa).filter(Boolean));
+      const calc = (vs, as, ms) => {
+        const receita = vs.reduce((s, v) => s + parseValorBR(v.valor), 0);
+        const combustivel = as.reduce((s, a) => s + parseValorBR(a.valor), 0);
+        const manutencao = ms.reduce((s, m) => s + parseValorBR(m.valor), 0);
+        const km = vs.reduce((s, v) => s + (v.kmRodados ?? 0), 0);
+        const custo = combustivel + manutencao;
+        const lucro = receita - custo;
+        const porKm = (n) => (km > 0 ? n / km : null);
+        return {
+          viagens: vs.length, receita, combustivel, manutencao, custo, lucro, km,
+          custoPorKm: porKm(custo), receitaPorKm: porKm(receita), lucroPorKm: porKm(lucro),
+          margem: receita > 0 ? lucro / receita : null,
+        };
+      };
+      const geral = calc(concluidas, abast, manut);
+      const porVeiculo = Array.from(placas)
+        .map((placa) => ({
+          placa,
+          ...calc(
+            concluidas.filter((v) => v.placa === placa),
+            abast.filter((a) => a.placa === placa),
+            manut.filter((m) => m.placa === placa)
+          ),
+        }))
+        .sort((a, b) => b.lucro - a.lucro);
+      return { ...geral, porVeiculo };
+    }
+    const operacional = {
+      mes: desempenho(doMesAtual),
+      total: desempenho(() => true),
+    };
+
     return {
+      operacional,
       saldoTotal: formatValorBR(saldoAtual),
       saldoAtual: formatValorBR(saldoAtual),
       receitasMes: formatValorBR(totalReceitas),
@@ -1001,11 +1162,13 @@ export function DataProvider({ children }) {
       projecaoFutura,
       veiculosAtivos,
     };
-  }, [receitas, despesas, veiculos]);
+  }, [receitas, despesas, veiculos, viagens, abastecimentos, manutencoes]);
 
   const value = {
     hidratado,
     carregando,
+    dadosDoCache,
+    recarregarDados: () => setVersaoDados((v) => v + 1),
     resumo,
     veiculos, addVeiculo, updateVeiculo, deleteVeiculo,
     motoristas, addMotorista, updateMotorista, deleteMotorista,

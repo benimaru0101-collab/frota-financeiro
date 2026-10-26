@@ -50,7 +50,7 @@ export default function DespesasScreen({ navigation }) {
                   <Text style={styles.categoria}>{item.categoria}{item.data ? ` · ${item.data}` : ''}</Text>
                 </View>
                 <View style={[styles.pill, { backgroundColor: item.status === 'pendente' ? colors.primary : colors.success, marginTop: 4 }]}>
-                  <Text style={styles.pillTexto}>{item.statusLabel}</Text>
+                  <Text style={styles.pillTexto}>{item.statusLabel}{item.pendenteEnvio ? ' · ⏳' : ''}</Text>
                 </View>
               </View>
               <Text style={styles.valor}>{item.valor}</Text>

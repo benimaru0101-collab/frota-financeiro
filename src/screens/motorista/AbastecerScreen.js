@@ -36,11 +36,15 @@ export default function AbastecerScreen() {
     }
     setSalvando(true);
     try {
-      await registrarAbastecimento({ veiculoId: veiculo.id, litros: nLitros, valor: nValor, posto, dataISO: hojeISO() });
+      const r = await registrarAbastecimento({ veiculoId: veiculo.id, litros: nLitros, valor: nValor, posto, dataISO: hojeISO() });
       setLitros('');
       setValor('');
       setPosto('');
-      Alert.alert('Abastecimento registrado', `${nLitros} L em ${placa}.`);
+      if (r?.offline) {
+        Alert.alert('Salvo sem internet', `${nLitros} L em ${placa}. Será enviado automaticamente quando a conexão voltar.`);
+      } else {
+        Alert.alert('Abastecimento registrado', `${nLitros} L em ${placa}.`);
+      }
     } catch (e) {
       Alert.alert('Não foi possível registrar', e?.message ?? '');
     } finally {

@@ -98,9 +98,9 @@ Concluído:
       tabelas do Financeiro (receitas, despesas, contas, categorias,
       dívidas) só ficam visíveis/editáveis por administrador — reforçado
       também via RLS no banco, não só escondendo na tela
-      - Limitação conhecida: `motoristas` ainda não tem vínculo com
-        `auth.users`, então o Motorista vê a Frota inteira (não só as
-        próprias viagens) — fica pra uma próxima entrega
+      - ~~Limitação conhecida: o Motorista via a Frota inteira~~ —
+        resolvido na entrega final (migration-11: `motoristas.user_id`
+        + policies, o motorista só enxerga as próprias viagens)
 
 Ainda pendente:
 
@@ -115,7 +115,29 @@ Ainda pendente:
       emulador/dispositivo Android real
 - [x] Repositório público e regra da main ativa (PR obrigatório + 1
       aprovação, sem force push)
-- [ ] Aprovar o Pull Request #2 (build do APK) — precisa de um colega
+- [x] Pull Request #2 (build do APK) aprovado e mesclado
+
+## Entrega final (encerramento da disciplina)
+
+- [x] App do Motorista separado do ADM (dois APKs, mesmo código —
+      variante `adm`/`motorista`): minhas viagens, iniciar/finalizar com
+      foto do comprovante, abastecimento, modo demonstração (migration-11)
+- [x] Integração Google: rota no Google Maps e evento no Google Agenda;
+      login com Google aberto para qualquer conta Gmail (app OAuth em
+      produção, com política de privacidade e termos publicados)
+- [x] Aprovação de novos administradores: contas novas no app ADM ficam
+      "Aguardando aprovação" até um administrador aprovar (migration-12)
+- [x] Hodômetro nas viagens: KM de saída/chegada, KM rodados e KM do
+      veículo atualizado por trigger (migration-13)
+- [x] Dashboard "Desempenho da Frota": lucro operacional, custo/KM,
+      receita/KM, lucro/KM e ranking por veículo
+- [x] Resiliência offline: cache de leitura, fila de escrita persistente
+      e sincronização automática (`src/lib/offline.js`)
+- [x] README profissional (rodar, gerar APK, instalar no celular)
+- [ ] "Potes"/estatísticas (confirmar o escopo com o professor)
+- [ ] Testar os APKs em celulares Android reais de tamanhos diferentes
+- [ ] Relatório Executivo (PDF) e Manual do Usuário (PDF)
+- [ ] Vídeo "Tutorial do Usuário" (3 a 5 min)
 
 > Membros do grupo: atribua cada cartão a um responsável e defina
 > etiquetas por módulo (Financeiro / Frota / Auth / Infra).

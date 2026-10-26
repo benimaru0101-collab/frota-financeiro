@@ -3,6 +3,7 @@ import { View, Text, Alert } from 'react-native';
 import { Screen, Title, Subtitle, Label, Input, PrimaryButton, SecondaryButton, ChipSelect } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { separarOrigemDestino } from '../../utils/data';
+import { lerKm } from '../../lib/motorista';
 import { spacing, colors } from '../../theme/colors';
 
 function formatarValor(texto) {
@@ -22,6 +23,8 @@ export default function EditarViagemScreen({ route, navigation }) {
   const [motorista, setMotorista] = useState(viagem?.motorista ?? motoristas[0]?.nome ?? '');
   const [data, setData] = useState(viagem?.data ?? '');
   const [valor, setValor] = useState((viagem?.valor ?? '').replace(/^R\$\s*/, ''));
+  const [kmInicial, setKmInicial] = useState(viagem?.kmInicial != null ? String(viagem.kmInicial) : '');
+  const [kmFinal, setKmFinal] = useState(viagem?.kmFinal != null ? String(viagem.kmFinal) : '');
 
   if (!viagem) {
     return (
@@ -39,7 +42,15 @@ export default function EditarViagemScreen({ route, navigation }) {
       Alert.alert('Preencha origem, destino e selecione o veículo');
       return;
     }
+    const kmI = lerKm(kmInicial);
+    const kmF = lerKm(kmFinal);
+    if (kmI != null && kmF != null && kmF < kmI) {
+      Alert.alert('KM inválido', 'O KM de chegada não pode ser menor que o KM de saída.');
+      return;
+    }
     updateViagem(viagem.id, {
+      kmInicial: kmI,
+      kmFinal: kmF,
       origemDestino: `${origem.trim()} - ${destino.trim()}`,
       placa,
       motorista: motorista || 'Não informado',
@@ -64,7 +75,7 @@ export default function EditarViagemScreen({ route, navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Editar Viagem</Title>
         <Subtitle>Atualize os dados da viagem</Subtitle>
@@ -94,6 +105,17 @@ export default function EditarViagemScreen({ route, navigation }) {
         <Input placeholder="DD/MM/AAAA" value={data} onChangeText={setData} />
         <Label>Valor</Label>
         <Input placeholder="0,00" keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
+
+        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+          <View style={{ flex: 1 }}>
+            <Label>KM de saída</Label>
+            <Input placeholder="Ex.: 182450" keyboardType="numeric" value={kmInicial} onChangeText={setKmInicial} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Label>KM de chegada</Label>
+            <Input placeholder="Ex.: 182900" keyboardType="numeric" value={kmFinal} onChangeText={setKmFinal} />
+          </View>
+        </View>
 
         <PrimaryButton title="Salvar Alterações" onPress={handleSalvar} />
         <SecondaryButton

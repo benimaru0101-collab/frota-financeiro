@@ -77,6 +77,7 @@ export default function MinhasViagensScreen({ navigation }) {
               <Text style={styles.rota}>{item.origem} → {item.destino}</Text>
               <Text style={styles.meta}>
                 {item.veiculos ? `${item.veiculos.placa} · ${item.veiculos.modelo}` : 'Veículo não informado'}
+                {item.pendenteEnvio ? ' · ⏳ aguardando envio' : ''}
               </Text>
             </Card>
           </TouchableOpacity>
