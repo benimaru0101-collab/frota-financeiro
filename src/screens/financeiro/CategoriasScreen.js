@@ -15,7 +15,7 @@ function iconePadrao(tipo) {
 }
 
 export default function CategoriasScreen({ navigation }) {
-  const { categorias, deleteCategoria } = useData();
+  const { categorias, alternarCategoriaAtiva } = useData();
   const [busca, setBusca] = React.useState('');
   const [aba, setAba] = React.useState('Todas');
 
@@ -25,10 +25,13 @@ export default function CategoriasScreen({ navigation }) {
     return bateBusca && bateAba;
   });
 
-  function confirmarExclusao(item) {
-    Alert.alert('Excluir categoria', `Excluir "${item.nome}"?`, [
+  // Soft delete: categoria não é apagada (lançamentos antigos dependem
+  // dela), só desativada — some dos formulários e fica marcada aqui.
+  function confirmarInativacao(item) {
+    const acao = item.ativa === false ? 'Reativar' : 'Desativar';
+    Alert.alert(`${acao} categoria`, `${acao} "${item.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: () => deleteCategoria(item.id) },
+      { text: acao, onPress: () => alternarCategoriaAtiva(item.id, item.ativa === false) },
     ]);
   }
 
@@ -50,15 +53,18 @@ export default function CategoriasScreen({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('EditarCategoria', { categoria: item })}
-            onLongPress={() => confirmarExclusao(item)}
+            onLongPress={() => confirmarInativacao(item)}
           >
-            <Card style={styles.item}>
+            <Card style={[styles.item, item.ativa === false && styles.inativa]}>
               <View style={[styles.iconeCirculo, { backgroundColor: item.cor || corPadrao(item.tipo) }]}>
                 <Text style={styles.iconeTexto}>{item.icone || iconePadrao(item.tipo)}</Text>
               </View>
               <View style={{ flex: 1, marginLeft: spacing.md }}>
                 <Text style={styles.nome}>{item.nome}</Text>
-                <Text style={styles.subtitulo}>{item.tipo === 'receita' ? 'Receita' : 'Despesa'}</Text>
+                <Text style={styles.subtitulo}>
+                  {item.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                  {item.ativa === false ? ' · Inativa' : ''}
+                </Text>
               </View>
               <Text style={styles.chevron}>›</Text>
             </Card>
@@ -77,6 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   item: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center' },
+  inativa: { opacity: 0.45 },
   iconeCirculo: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   iconeTexto: { fontSize: 18 },
   nome: { color: colors.text, fontSize: 15, fontWeight: '600' },

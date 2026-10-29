@@ -19,7 +19,7 @@ export default function NovoMotoristaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Novo Motorista</Title>
         <Subtitle>Cadastre um motorista da frota</Subtitle>

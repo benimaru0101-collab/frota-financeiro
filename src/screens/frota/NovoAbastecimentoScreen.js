@@ -32,7 +32,7 @@ export default function NovoAbastecimentoScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Novo Abastecimento</Title>
         <Subtitle>Registre um abastecimento</Subtitle>

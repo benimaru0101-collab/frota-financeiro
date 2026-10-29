@@ -40,7 +40,7 @@ export default function EditarDocumentoScreen({ route, navigation }) {
 
   if (!documento) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Documento não encontrado</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

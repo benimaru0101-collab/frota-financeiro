@@ -1,13 +1,25 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { colors, spacing, radius } from '../theme/colors';
 
-export function Screen({ children, style }) {
+// `scroll`: formulários longos (ex.: com prévia do comprovante) passam a
+// rolar, para o botão Salvar nunca ficar escondido atrás da barra de abas.
+export function Screen({ children, style, scroll = false }) {
   return (
     <SafeAreaView style={[styles.screen, style]} edges={['top', 'bottom']}>
-      {children}
+      {scroll ? (
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: spacing.xl }}
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        children
+      )}
     </SafeAreaView>
   );
 }
@@ -28,12 +40,32 @@ export function Label({ children, style }) {
   return <Text style={[styles.label, style]}>{children}</Text>;
 }
 
+// Máscara DD/MM/AAAA: o usuário digita só os números e as barras
+// aparecem sozinhas (ex.: 10112026 -> 10/11/2026).
+export function mascararData(texto) {
+  const d = String(texto ?? '').replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
 export function Input(props) {
+  // Campos de data (placeholder "DD/MM/AAAA...") ganham a máscara e o
+  // teclado numérico automaticamente, sem mudar cada tela.
+  const ehData = typeof props.placeholder === 'string' && props.placeholder.startsWith('DD/MM/AAAA');
+  const extras = ehData
+    ? {
+        keyboardType: 'number-pad',
+        maxLength: 10,
+        onChangeText: (t) => props.onChangeText && props.onChangeText(mascararData(t)),
+      }
+    : {};
   return (
     <TextInput
       placeholderTextColor={colors.textMuted}
       style={[styles.input, props.style]}
       {...props}
+      {...extras}
     />
   );
 }

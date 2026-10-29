@@ -28,7 +28,7 @@ export default function NovoVeiculoScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Novo Veículo</Title>
         <Subtitle>Cadastre um veículo na frota</Subtitle>

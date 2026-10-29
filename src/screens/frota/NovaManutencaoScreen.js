@@ -32,7 +32,7 @@ export default function NovaManutencaoScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Manutenção</Title>
         <Subtitle>Registre uma manutenção</Subtitle>

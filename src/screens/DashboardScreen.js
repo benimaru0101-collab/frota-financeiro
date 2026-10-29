@@ -4,6 +4,7 @@ import { Screen, Card, Title, Subtitle } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { documentosVencendo } from '../utils/vencimentos';
+import DesempenhoFrota from '../components/DesempenhoFrota';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
@@ -45,6 +46,8 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.metricLabel}>Veículos Ativos</Text>
           <Text style={styles.metricValue}>{dashboardResumo.veiculosAtivos}</Text>
         </Card>
+
+        {isAdmin && <DesempenhoFrota operacional={dashboardResumo.operacional} />}
 
         {isAdmin && dashboardResumo.projecaoFutura.length > 0 && (
           <View style={{ marginTop: spacing.lg }}>

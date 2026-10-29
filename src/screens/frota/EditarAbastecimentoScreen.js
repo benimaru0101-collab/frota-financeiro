@@ -21,7 +21,7 @@ export default function EditarAbastecimentoScreen({ route, navigation }) {
 
   if (!abastecimento) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Abastecimento não encontrado</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

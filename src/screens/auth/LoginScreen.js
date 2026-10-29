@@ -3,9 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Screen, Title, Subtitle, Label, Input, PrimaryButton, GoogleButton } from '../../components/UI';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, spacing } from '../../theme/colors';
+import { APP, EH_APP_MOTORISTA } from '../../config/app';
 
 export default function LoginScreen({ navigation }) {
-  const { signInWithEmail, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signInWithGoogle, entrarDemoMotorista } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,8 +39,8 @@ export default function LoginScreen({ navigation }) {
   return (
     <Screen>
       <View style={{ marginTop: spacing.xl }}>
-        <Title>Login</Title>
-        <Subtitle>Faça login para continuar</Subtitle>
+        <Title>{APP.nome}</Title>
+        <Subtitle>{EH_APP_MOTORISTA ? 'Entre para ver suas viagens' : 'Faça login para gerenciar a frota'}</Subtitle>
       </View>
 
       <View style={{ marginTop: spacing.xl }}>
@@ -54,6 +55,12 @@ export default function LoginScreen({ navigation }) {
 
         <PrimaryButton title="Entrar" onPress={handleLogin} loading={loading} />
         <GoogleButton title="Entrar com Google" onPress={handleGoogleLogin} loading={googleLoading} />
+
+        {EH_APP_MOTORISTA && (
+          <TouchableOpacity onPress={entrarDemoMotorista} style={{ marginTop: spacing.md, alignItems: 'center' }}>
+            <Text style={styles.link}>Ver demonstração (sem conta)</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity onPress={() => navigation.navigate('Cadastro')} style={{ marginTop: spacing.lg, alignItems: 'center' }}>
           <Text style={styles.footerText}>Já tem uma conta? <Text style={styles.link}>Cadastre-se</Text></Text>

@@ -7,7 +7,6 @@ import { spacing, colors, radius } from '../../theme/colors';
 
 const CATEGORIAS = ['Frota', 'Operacional', 'Administrativo'];
 const STATUS_OPCOES = ['Pago', 'Pendente'];
-const FORMAS_PAGAMENTO = ['Pix', 'Boleto', 'Cartão', 'Dinheiro', 'Transferência'];
 
 function formatarValor(texto) {
   const limpo = texto.trim();
@@ -16,13 +15,19 @@ function formatarValor(texto) {
 }
 
 export default function NovaDespesaScreen({ navigation }) {
-  const { addDespesa } = useData();
+  // Categorias e formas de pagamento vêm dos cadastros (só as ativas);
+  // sem categoria de despesa cadastrada, usa a lista padrão.
+  const { addDespesa, categorias, nomesFormasPagamento } = useData();
+  const nomesCategorias = categorias.filter((c) => c.tipo === 'despesa' && c.ativa !== false).map((c) => c.nome);
+  const opcoesCategoria = nomesCategorias.length > 0 ? nomesCategorias : CATEGORIAS;
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
-  const [categoria, setCategoria] = useState(CATEGORIAS[0]);
+  const [categoriaEscolhida, setCategoria] = useState(opcoesCategoria[0]);
+  const categoria = opcoesCategoria.includes(categoriaEscolhida) ? categoriaEscolhida : opcoesCategoria[0];
   const [data, setData] = useState('');
   const [statusLabel, setStatusLabel] = useState(STATUS_OPCOES[0]);
-  const [formaPagamento, setFormaPagamento] = useState(FORMAS_PAGAMENTO[0]);
+  const [formaEscolhida, setFormaPagamento] = useState(nomesFormasPagamento[0]);
+  const formaPagamento = nomesFormasPagamento.includes(formaEscolhida) ? formaEscolhida : nomesFormasPagamento[0];
   const [dataPagamento, setDataPagamento] = useState('');
   const [preview, setPreview] = useState(null);
   const [enviando, setEnviando] = useState(false);
@@ -78,7 +83,7 @@ export default function NovaDespesaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Despesa</Title>
         <Subtitle>Registre uma nova saída financeira</Subtitle>
@@ -90,7 +95,7 @@ export default function NovaDespesaScreen({ navigation }) {
         <Label>Valor</Label>
         <Input placeholder="0,00" keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
         <Label>Categoria</Label>
-        <ChipSelect options={CATEGORIAS} value={categoria} onChange={setCategoria} />
+        <ChipSelect options={opcoesCategoria} value={categoria} onChange={setCategoria} />
         <Label>Data</Label>
         <Input placeholder="DD/MM/AAAA" value={data} onChangeText={setData} />
 
@@ -100,7 +105,7 @@ export default function NovaDespesaScreen({ navigation }) {
         {!pendente && (
           <>
             <Label>Forma de Pagamento</Label>
-            <ChipSelect options={FORMAS_PAGAMENTO} value={formaPagamento} onChange={setFormaPagamento} />
+            <ChipSelect options={nomesFormasPagamento} value={formaPagamento} onChange={setFormaPagamento} />
             <Label>Data do Pagamento</Label>
             <Input placeholder="DD/MM/AAAA (padrão: mesma data acima)" value={dataPagamento} onChangeText={setDataPagamento} />
 

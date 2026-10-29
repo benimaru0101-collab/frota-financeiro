@@ -35,7 +35,7 @@ export default function AbastecimentosScreen({ navigation }) {
             <Card style={styles.item}>
               <View>
                 <Text style={styles.placa}>{item.placa}</Text>
-                <Text style={styles.meta}>{item.litros} · {item.data}</Text>
+                <Text style={styles.meta}>{item.litros} · {item.data}{item.pendenteEnvio ? ' · ⏳ aguardando envio' : ''}</Text>
               </View>
               <Text style={styles.valor}>{item.valor}</Text>
             </Card>

@@ -1,93 +1,158 @@
 # Financeiro e Frota Logística
 
-App mobile (React Native + Expo) para gestão financeira e de frota,
-desenvolvido a partir do protótipo de baixa fidelidade da equipe.
+Aplicativo Android de **gestão financeira e logística** para pequenas transportadoras.
+O projeto tem **dois apps** que usam o mesmo código e o mesmo banco de dados:
 
-## Stack
+| App | Para quem | O que faz |
+|---|---|---|
+| **Frota ADM** | Gestor / dono da empresa | Caixa (receitas e despesas), dívidas e financiamentos, frota, manutenções, documentos, viagens, relatórios e dashboard de lucro e custo por KM |
+| **Frota Motorista** | Motorista | Vê as próprias viagens, inicia e finaliza informando o KM do painel, tira foto do comprovante, registra abastecimento, abre a rota no Google Maps e salva a viagem no Google Agenda |
 
-- **Frontend:** React Native + Expo (React Navigation para as rotas)
-- **Backend / Banco de dados:** Supabase (PostgreSQL + Auth + Storage)
-- **Autenticação:** Login com e-mail/senha e SSO Google via
-  `expo-auth-session` + Supabase Auth (fluxo OAuth2 nativo, sem
-  formulário manual)
+Os dois funcionam **sem internet**: os dados ficam salvos no aparelho e o que for lançado offline é enviado sozinho quando a conexão volta.
 
-Justificativa da stack está na apresentação da atividade (`docs/`).
+> **Baixar os APKs prontos:** [Releases](https://github.com/benimaru0101-collab/frota-financeiro/releases)
 
-## Setup do projeto
+---
 
-> ⚠️ Este código foi escrito em um ambiente sem acesso ao registro
-> npm, então as dependências **não foram instaladas nem testadas**
-> aqui. Rode os passos abaixo na máquina de vocês.
+## Funcionalidades
 
-1. Instale as dependências:
+- **Autenticação:** e-mail/senha e **Login com Google** (OAuth2 + PKCE via `expo-auth-session` + Supabase Auth). A sessão fica salva no aparelho.
+- **Controle de acesso (RBAC):** papéis `administrador`, `motorista` e `pendente`. Contas novas no app ADM ficam **aguardando aprovação** até um administrador aprovar em *Usuários*. As regras valem no banco (RLS + triggers), não só na tela.
+- **Caixa:** receitas e despesas com status Pendente/Pago, forma de pagamento, comprovante (foto), contas e categorias. O saldo atual considera só o que já foi pago ou recebido.
+- **Projeção de caixa:** os lançamentos pendentes aparecem agrupados por mês.
+- **Dívidas e financiamentos:** as parcelas são geradas automaticamente numa transação no Postgres.
+- **Frota:** veículos (com hodômetro), motoristas, manutenções, abastecimentos e documentos com aviso de vencimento (notificação local).
+- **Viagens e hodômetro:** KM de saída e de chegada, KM rodados e atualização automática do KM do veículo (trigger).
+- **Dashboard de BI:**
+  - saldo, receitas e despesas do mês;
+  - **Desempenho da Frota:** lucro operacional, custo/KM, receita/KM, lucro/KM e ranking por veículo;
+  - relatórios por período e categoria.
+- **Resiliência offline:** cache de leitura e fila de escrita persistente com sincronização automática (detalhes abaixo).
+- **Integrações Google:** rota no Maps e evento no Agenda por link direto, sem chave de API.
+
+## Tecnologias
+
+| Camada | Tecnologia |
+|---|---|
+| App | React Native 0.74 + **Expo SDK 51** (JavaScript) |
+| Navegação | React Navigation 6 (abas inferiores + pilhas) |
+| Estado | React Context (`AuthContext`, `DataContext`, `MotoristaContext`) |
+| Backend | **Supabase**: PostgreSQL, Auth, Storage e Row Level Security |
+| Offline | AsyncStorage (cache + fila) e `expo-file-system` (fotos pendentes) |
+| Build | Gradle (pasta `android/` versionada) — gera os 2 APKs |
+
+## Arquitetura (resumo)
+
+```
+src/
+  screens/      telas (View)            -> só desenham e chamam ações
+  contexts/     estado + regras (ViewModel) -> AuthContext, DataContext, MotoristaContext
+  lib/          acesso a dados (Model/serviços) -> supabase, motorista, offline, upload, google
+  components/   componentes de UI reutilizáveis (UI.js, DesempenhoFrota, BarraOffline)
+  navigation/   RootNavigator decide: login | aguardando aprovação | app ADM | app Motorista
+  config/       variante do app (adm | motorista), gerada pelos scripts de build
+db/             schema.sql + migrations numeradas (rodar em ordem no Supabase)
+```
+
+É uma divisão em camadas no estilo **MVVM**:
+
+- **Telas (View):** não falam com o banco.
+- **Contextos (ViewModel):** guardam o estado e expõem ações (`addDespesa`, `updateViagem`…).
+- **`lib/` (Model/serviços):** faz o acesso ao Supabase e ao armazenamento local.
+
+### Estratégia offline
+
+1. **Cache de leitura:** cada carregamento bem-sucedido é salvo no AsyncStorage. Sem rede, o app abre com a última cópia, inclusive o papel do usuário.
+2. **Fila de escrita (outbox):** se uma gravação falha por falta de rede, ela vai para uma fila persistente e aparece na tela com ⏳.
+   - Os registros novos já nascem com **UUID gerado no aparelho**, então não há duplicação.
+   - Foto de comprovante feita offline é copiada para uma pasta do app e enviada depois.
+3. **Sincronização:** a cada 15 s, ao voltar para o app ou pelo botão "Tentar agora".
+   - A fila é enviada **na ordem** e depois os dados são recarregados do banco.
+   - Conflito: a última gravação vence.
+
+O código está em [`src/lib/offline.js`](src/lib/offline.js).
+
+---
+
+## Como rodar em desenvolvimento
+
+**Pré-requisitos:** Node.js 18+, Git e uma conta gratuita no [Supabase](https://supabase.com). Para gerar APK, também o Android Studio (SDK + JDK).
+
+1. Clone e instale as dependências:
    ```bash
+   git clone https://github.com/benimaru0101-collab/frota-financeiro.git
+   cd frota-financeiro
    npm install
    ```
-2. Crie um projeto em [supabase.com](https://supabase.com), copie a
-   `Project URL` e a `anon key`.
-3. Rode o script `db/schema.sql` no SQL Editor do Supabase para criar
-   as tabelas (veículos, motoristas, viagens, abastecimentos,
-   manutenções, documentos, receitas, despesas).
-4. No painel do Supabase, ative o provedor **Google** em
-   `Authentication > Providers` e configure as credenciais OAuth
-   criadas no [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-   (tela de consentimento OAuth + Client IDs Web/Android/iOS).
-5. Copie `.env.example` para `.env` e preencha com suas credenciais.
-   Depois, replique esses valores em `app.json > expo.extra` (ou
-   configure via `eas.json` / variáveis de ambiente em builds EAS).
-6. Rode o app:
+2. **Banco de dados:** no Supabase, abra o *SQL Editor* e rode, nesta ordem:
+   - `db/schema.sql`;
+   - `db/migration-2-...sql` até `db/migration-13-hodometro-viagens.sql`;
+   - (opcional) `db/seed-dados-exemplo.sql`.
+3. **Login com Google:**
+   1. Em *Authentication → Providers*, ative **Google** com o Client ID e o Secret criados no [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+   2. Em *Authentication → URL Configuration*, adicione as Redirect URLs `frotafinanceiro://**` e `frotamotorista://**`.
+4. **Credenciais:** copie `.env.example` para `.env` e preencha `SUPABASE_URL` e `SUPABASE_ANON_KEY`. O `.env` não vai para o Git.
+5. Rode:
    ```bash
-   npx expo start
+   npx expo start            # Expo Go / emulador
+   npx expo start --web      # versão web (rodar-app-web.bat no Windows)
    ```
-   Escaneie o QR code com o app Expo Go, ou pressione `a`/`i` para
-   abrir no emulador Android/iOS.
+   Para testar o app do Motorista em desenvolvimento, troque `src/config/variante.js` para `'motorista'`.
 
-## Estrutura de telas
+## Gerar os APKs e instalar no celular
 
-- **Autenticação:** Splash, Boas-vindas, Login, Cadastro, Recuperar
-  senha, Código de verificação, Nova senha, Sucesso
-- **Início:** Dashboard com saldo, receitas/despesas do mês e acesso
-  rápido
-- **Financeiro:** Receitas, Despesas, Fluxo de Caixa
-- **Frota:** Veículos, Detalhes do veículo, Motoristas, Viagens,
-  Abastecimentos, Manutenções, Documentos
-- **Mais:** Perfil, Configurações
+### Gerar (Windows)
 
-## Modelagem de dados
+Com o Android Studio instalado:
 
-Veja `db/schema.sql` (script pronto para rodar no Supabase) e
-`docs/DER.mmd` / `docs/DER.png` (diagrama entidade-relacionamento).
+1. Dê dois cliques em **`gerar-os-2-apks.bat`**, ou rode `gerar-apk-adm.bat` / `gerar-apk-motorista.bat` separadamente.
+2. Os arquivos saem em **`apk/FrotaADM.apk`** e **`apk/FrotaMotorista.apk`**.
 
-## Organização do projeto (Trello)
+Por baixo, o script faz o seguinte:
 
-Board sugerido — colunas e cartões iniciais em `docs/board-trello.md`.
-Crie o board em [trello.com](https://trello.com) replicando essa
-estrutura (ou peça para o Claude criar automaticamente conectando o
-Trello nas configurações de conectores).
+```bat
+:: grava a variante em src/config/variante.js e roda o Gradle
+cd android
+gradlew assembleRelease                 :: Frota ADM  (com.tempesta.frotafinanceiro)
+gradlew assembleRelease -PappMotorista  :: Frota Motorista (com.tempesta.frotafinanceiro.motorista)
+```
 
-## Controle de versão / regras do repositório
+Os dois apps têm pacotes diferentes, então podem ficar instalados juntos no mesmo celular.
 
-Depois de subir este repositório para o GitHub:
+> Não rode `expo prebuild --clean`: ele recria a pasta `android/` e apaga a configuração das duas variantes.
 
-1. Vá em **Settings > Branches** no repositório.
-2. Em **Branch protection rules**, adicione uma regra para `main`
-   com, no mínimo:
-   - "Require a pull request before merging"
-   - "Require approvals" (1 aprovação)
-   - "Do not allow bypassing the above settings"
-3. Isso bloqueia commits diretos na `main` — todo mundo precisa abrir
-   PR a partir de uma branch (`feature/...`, `fix/...`).
+### Instalar num Android físico
 
-Sugestão de convenção de branches: `feature/nome-da-tela`,
-`fix/descricao-do-bug`, `chore/tarefa-organizacional`.
+1. Copie o `.apk` para o celular (cabo USB, Google Drive, WhatsApp…) ou baixe direto da página de [Releases](https://github.com/benimaru0101-collab/frota-financeiro/releases).
+2. Toque no arquivo. Se pedir, permita **"Instalar apps desconhecidos"** para o app que abriu o arquivo.
+3. Se o Play Protect avisar, toque em **"Instalar mesmo assim"**.
+4. Para atualizar, instale o APK novo **por cima** do antigo. O login é mantido.
 
-## Gerar o APK (app instalável no Android)
+Com cabo e depuração USB: `adb install -r apk/FrotaADM.apk`.
 
-1. Crie o arquivo `.env` (copie de `.env.example`) com `SUPABASE_URL` e `SUPABASE_ANON_KEY` reais — ele não vai para o Git; o `app.config.js` lê essas variáveis na hora do build.
-2. **Build local** (precisa do Android Studio instalado, ~10 GB livres): rode `gerar-apk.bat` (ou `npx expo prebuild --platform android --clean` e depois `cd android && gradlew assembleRelease`). O APK sai em `android/app/build/outputs/apk/release/app-release.apk`.
-3. **Build na nuvem** (sem Android Studio): `npx eas-cli build -p android --profile preview` — precisa de uma conta Expo gratuita; no fim a Expo mostra um link para baixar o APK.
-4. Instale o APK no celular (permitir "fontes desconhecidas") ou no emulador (`adb install app-release.apk`).
+---
 
-## Documentação da Parte 2
+## Banco de dados
 
-Veja `docs/documentacao-parte2.pdf` (núcleo financeiro, navegação e UX, arquitetura de dados, custos, roteiro do vídeo e testes).
+O modelo completo está em `db/schema.sql` e no DER (`docs/DER.png`). As migrations seguintes adicionaram:
+
+| Migration | O que adiciona |
+|---|---|
+| 6 | Status de pagamento |
+| 7 | Dívidas e parcelas |
+| 8 e 9 | RBAC e gestão de usuários |
+| 10 | Formas de pagamento e inativação |
+| 11 | App do Motorista (vínculo usuário ↔ motorista, policies das viagens) |
+| 12 | Aprovação de novos administradores |
+| 13 | Hodômetro nas viagens |
+
+## Fluxo de trabalho (Git)
+
+- A `main` é protegida: PR obrigatório com 1 aprovação e sem *force push*.
+- Branches: `feature/...`, `fix/...`, `docs/...`.
+- Board da equipe: `docs/board-trello.md`.
+
+## Documentação
+
+- Documentação técnica da Parte 2: `docs/documentacao-parte2.pdf`
+- Site público (política de privacidade e termos do login Google): https://benimaru0101-collab.github.io/frota-financeiro/

@@ -17,6 +17,7 @@ import EditarContaScreen from '../screens/financeiro/EditarContaScreen';
 import CategoriasScreen from '../screens/financeiro/CategoriasScreen';
 import NovaCategoriaScreen from '../screens/financeiro/NovaCategoriaScreen';
 import EditarCategoriaScreen from '../screens/financeiro/EditarCategoriaScreen';
+import FormasPagamentoScreen from '../screens/financeiro/FormasPagamentoScreen';
 import RelatoriosScreen from '../screens/financeiro/RelatoriosScreen';
 import RelatorioDetalhadoScreen from '../screens/financeiro/RelatorioDetalhadoScreen';
 import FiltrosRelatorioScreen from '../screens/financeiro/FiltrosRelatorioScreen';
@@ -73,6 +74,7 @@ function FinanceiroStackNavigator() {
       <FinanceiroStack.Screen name="Categorias" component={CategoriasScreen} />
       <FinanceiroStack.Screen name="NovaCategoria" component={NovaCategoriaScreen} options={{ presentation: 'modal' }} />
       <FinanceiroStack.Screen name="EditarCategoria" component={EditarCategoriaScreen} options={{ presentation: 'modal' }} />
+      <FinanceiroStack.Screen name="FormasPagamento" component={FormasPagamentoScreen} />
       <FinanceiroStack.Screen name="Relatorios" component={RelatoriosScreen} />
       <FinanceiroStack.Screen name="RelatorioDetalhado" component={RelatorioDetalhadoScreen} />
       <FinanceiroStack.Screen name="FiltrosRelatorio" component={FiltrosRelatorioScreen} options={{ presentation: 'modal' }} />

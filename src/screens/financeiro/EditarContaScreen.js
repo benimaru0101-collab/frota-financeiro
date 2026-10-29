@@ -18,7 +18,7 @@ export default function EditarContaScreen({ route, navigation }) {
 
   if (!conta) {
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Conta não encontrada</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

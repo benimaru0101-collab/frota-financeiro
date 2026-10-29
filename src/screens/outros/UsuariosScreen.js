@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, ChipSelect } from '../../components/UI';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, spacing, radius } from '../../theme/colors';
@@ -14,6 +14,10 @@ export default function UsuariosScreen() {
   const [usuarios, setUsuarios] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [salvandoId, setSalvandoId] = useState(null);
+  // App do Motorista (migration-11): cada conta de motorista é ligada
+  // a um cadastro em `motoristas` (motoristas.user_id).
+  const [motoristas, setMotoristas] = useState([]);
+  const [vinculandoId, setVinculandoId] = useState(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -27,47 +31,84 @@ export default function UsuariosScreen() {
       return;
     }
     setUsuarios(data ?? []);
+    const { data: cadastros } = await supabase.from('motoristas').select('id, nome, user_id').order('nome');
+    setMotoristas(cadastros ?? []);
   }, []);
+
+  async function vincular(usuario, nomeCadastro) {
+    const alvo = motoristas.find((m) => m.nome === nomeCadastro) ?? null;
+    setSalvandoId(usuario.id);
+    try {
+      // Solta o vínculo antigo desta conta e liga ao cadastro escolhido.
+      const { error: e1 } = await supabase.from('motoristas').update({ user_id: null }).eq('user_id', usuario.id);
+      if (e1) throw e1;
+      if (alvo) {
+        const { error: e2 } = await supabase.from('motoristas').update({ user_id: usuario.id }).eq('id', alvo.id);
+        if (e2) throw e2;
+      }
+      setMotoristas((atual) =>
+        atual.map((m) => {
+          if (alvo && m.id === alvo.id) return { ...m, user_id: usuario.id };
+          if (m.user_id === usuario.id) return { ...m, user_id: null };
+          return m;
+        })
+      );
+      setVinculandoId(null);
+    } catch (erro) {
+      Alert.alert('Não foi possível vincular', erro.message);
+    } finally {
+      setSalvandoId(null);
+    }
+  }
 
   useEffect(() => {
     carregar();
   }, [carregar]);
 
   function trocarPapel(item) {
+    const quem = item.nome || item.email || 'este usuário';
+    if (item.role === 'pendente') {
+      Alert.alert('Aprovar conta', `${quem} pediu acesso pelo app ADM. Aprovar como:`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Motorista', onPress: () => aplicarPapel(item, 'motorista') },
+        { text: 'Administrador', onPress: () => aplicarPapel(item, 'administrador') },
+      ]);
+      return;
+    }
     const novo = item.role === 'motorista' ? 'administrador' : 'motorista';
     const rotulo = novo === 'administrador' ? 'Administrador' : 'Motorista';
     const ehVoce = item.id === user?.id;
     Alert.alert(
       'Alterar papel',
-      `Mudar ${item.nome || item.email || 'este usuário'} para ${rotulo}?` +
+      `Mudar ${quem} para ${rotulo}?` +
         (ehVoce && novo === 'motorista' ? '\n\nAtenção: você perderá o acesso ao Financeiro.' : ''),
       [
         { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Alterar',
-          onPress: async () => {
-            setSalvandoId(item.id);
-            const { error } = await supabase.from('profiles').update({ role: novo }).eq('id', item.id);
-            setSalvandoId(null);
-            if (error) {
-              Alert.alert('Não foi possível alterar', error.message);
-              return;
-            }
-            setUsuarios((atual) => atual.map((u) => (u.id === item.id ? { ...u, role: novo } : u)));
-            if (ehVoce) {
-              Alert.alert('Papel alterado', 'Feche e abra o app para ver o menu do novo papel.');
-            }
-          },
-        },
+        { text: 'Alterar', onPress: () => aplicarPapel(item, novo) },
       ]
     );
+  }
+
+  async function aplicarPapel(item, novo) {
+    const ehVoce = item.id === user?.id;
+    setSalvandoId(item.id);
+    const { error } = await supabase.from('profiles').update({ role: novo }).eq('id', item.id);
+    setSalvandoId(null);
+    if (error) {
+      Alert.alert('Não foi possível alterar', error.message);
+      return;
+    }
+    setUsuarios((atual) => atual.map((u) => (u.id === item.id ? { ...u, role: novo } : u)));
+    if (ehVoce) {
+      Alert.alert('Papel alterado', 'Feche e abra o app para ver o menu do novo papel.');
+    }
   }
 
   return (
     <Screen>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Usuários e Papéis</Title>
-        <Subtitle>Toque em um usuário para alternar entre Administrador e Motorista</Subtitle>
+        <Subtitle>Toque em um usuário para aprovar ou trocar o papel · motoristas: ligue a conta ao cadastro</Subtitle>
       </View>
       {carregando && usuarios.length === 0 ? (
         <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
@@ -90,11 +131,20 @@ export default function UsuariosScreen() {
                 {salvandoId === item.id ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <View style={[styles.pill, { backgroundColor: item.role === 'motorista' ? colors.info : colors.primary }]}>
-                    <Text style={styles.pillTexto}>{item.role === 'motorista' ? 'Motorista' : 'Administrador'}</Text>
+                  <View style={[styles.pill, { backgroundColor: COR_PAPEL[item.role] ?? colors.primary }]}>
+                    <Text style={styles.pillTexto}>{ROTULO_PAPEL[item.role] ?? 'Administrador'}</Text>
                   </View>
                 )}
               </Card>
+              {item.role === 'motorista' && (
+                <VinculoMotorista
+                  usuario={item}
+                  motoristas={motoristas}
+                  aberto={vinculandoId === item.id}
+                  onAbrir={() => setVinculandoId(vinculandoId === item.id ? null : item.id)}
+                  onEscolher={(nome) => vincular(item, nome)}
+                />
+              )}
             </TouchableOpacity>
           )}
         />
@@ -103,7 +153,29 @@ export default function UsuariosScreen() {
   );
 }
 
+const NENHUM = 'Nenhum';
+
+const ROTULO_PAPEL = { administrador: 'Administrador', motorista: 'Motorista', pendente: 'Pendente · aprovar' };
+const COR_PAPEL = { administrador: colors.primary, motorista: colors.info, pendente: colors.danger };
+
+function VinculoMotorista({ usuario, motoristas, aberto, onAbrir, onEscolher }) {
+  const atual = motoristas.find((m) => m.user_id === usuario.id);
+  // Só oferece cadastros livres (ou o já ligado a esta conta).
+  const opcoes = [NENHUM, ...motoristas.filter((m) => !m.user_id || m.user_id === usuario.id).map((m) => m.nome)];
+  return (
+    <View style={styles.vinculo}>
+      <Text style={styles.vinculoTexto} onPress={onAbrir}>
+        🪪 Cadastro de motorista: <Text style={{ color: atual ? colors.text : colors.danger }}>{atual ? atual.nome : 'não vinculado'}</Text>
+        <Text style={{ color: colors.primary }}>{aberto ? '  ▲' : '  · alterar'}</Text>
+      </Text>
+      {aberto && <ChipSelect options={opcoes} value={atual ? atual.nome : NENHUM} onChange={onEscolher} />}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  vinculo: { marginTop: -spacing.sm, marginBottom: spacing.md, paddingHorizontal: spacing.sm },
+  vinculoTexto: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.xs },
   item: { marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center' },
   nome: { color: colors.text, fontSize: 15, fontWeight: '600' },
   email: { color: colors.textMuted, fontSize: 12, marginTop: 2 },

@@ -16,7 +16,7 @@ export default function EditarMotoristaScreen({ route, navigation }) {
     // Tela acessada sem um motorista válido (ex.: deep link direto) —
     // evita quebrar o app com propriedades undefined.
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Motorista não encontrado</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

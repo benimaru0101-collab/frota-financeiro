@@ -20,7 +20,7 @@ export default function EditarVeiculoScreen({ route, navigation }) {
     // Tela acessada sem um veículo válido (ex.: deep link direto) —
     // evita quebrar o app com propriedades undefined.
     return (
-      <Screen>
+      <Screen scroll>
         <View style={{ marginTop: spacing.xl }}>
           <Title>Veículo não encontrado</Title>
           <SecondaryButton title="Voltar" onPress={() => navigation.goBack()} style={{ marginTop: spacing.lg }} />

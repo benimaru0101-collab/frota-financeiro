@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Screen, Title, Subtitle, Label, Input, PrimaryButton, GoogleButton } from '../../components/UI';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, spacing } from '../../theme/colors';
+import { EH_APP_MOTORISTA } from '../../config/app';
 
 export default function CadastroScreen({ navigation }) {
   const { signUpWithEmail, signInWithGoogle } = useAuth();
@@ -40,8 +41,8 @@ export default function CadastroScreen({ navigation }) {
   return (
     <Screen>
       <View style={{ marginTop: spacing.xl }}>
-        <Title>Criar conta</Title>
-        <Subtitle>Preencha seus dados abaixo</Subtitle>
+        <Title>{EH_APP_MOTORISTA ? 'Cadastro de motorista' : 'Criar conta'}</Title>
+        <Subtitle>{EH_APP_MOTORISTA ? 'Crie sua conta. O administrador vincula você ao seu cadastro de motorista.' : 'Preencha seus dados abaixo'}</Subtitle>
       </View>
 
       <View style={{ marginTop: spacing.xl }}>

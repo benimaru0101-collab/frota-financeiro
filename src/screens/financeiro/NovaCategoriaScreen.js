@@ -31,7 +31,7 @@ export default function NovaCategoriaScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Nova Categoria</Title>
         <Subtitle>Categorias organizam receitas e despesas</Subtitle>

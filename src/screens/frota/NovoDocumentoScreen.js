@@ -51,7 +51,7 @@ export default function NovoDocumentoScreen({ navigation }) {
   }
 
   return (
-    <Screen>
+    <Screen scroll>
       <View style={{ marginTop: spacing.lg }}>
         <Title>Novo Documento</Title>
         <Subtitle>Registre um documento do veículo</Subtitle>

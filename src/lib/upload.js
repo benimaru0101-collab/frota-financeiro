@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from './supabase';
+import { demo } from './demo';
 
 // Funções de apoio para o "Upload de documentos": deixam o usuário
 // escolher uma foto (galeria ou câmera) e enviam pro bucket público
@@ -34,6 +35,7 @@ export async function tirarFoto() {
 
 // Lê o arquivo escolhido, envia pro Storage e devolve a URL pública.
 export async function enviarArquivoDocumento(asset) {
+  if (demo.ativo()) return asset.uri; // demonstração: mantém a foto no próprio aparelho
   const base64 = await FileSystem.readAsStringAsync(asset.uri, {
     encoding: FileSystem.EncodingType.Base64,
   });
