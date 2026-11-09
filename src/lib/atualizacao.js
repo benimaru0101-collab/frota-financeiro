@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Linking } from 'react-native';
 import Constants from 'expo-constants';
+import appJson from '../../app.json';
 import { EH_APP_MOTORISTA } from '../config/app';
 
 // Atualização do app sem loja: a cada publicação, o script
@@ -10,7 +11,9 @@ import { EH_APP_MOTORISTA } from '../config/app';
 const URL_VERSAO =
   'https://github.com/benimaru0101-collab/frota-financeiro/releases/download/v1.0-teste/versao.json';
 
-export const VERSAO_ATUAL = Constants.expoConfig?.version ?? '0.0.0';
+// A versão vem do app.json, embutido no próprio código na hora do build
+// (funciona igual no APK e na web, sem depender de configuração nativa).
+export const VERSAO_ATUAL = appJson?.expo?.version ?? Constants.expoConfig?.version ?? '0.0.0';
 
 // "1.10.0" > "1.9.2"
 export function versaoMaisNova(remota, local) {

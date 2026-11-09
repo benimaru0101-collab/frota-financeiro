@@ -34,7 +34,7 @@ try {
 # versao.json: o botao "Atualizar" do app le este arquivo.
 $versao = (Get-Content (Join-Path $PSScriptRoot 'app.json') -Raw | ConvertFrom-Json).expo.version
 $base = "https://github.com/$repo/releases/download/$tag"
-$json = @{ versao = $versao; notas = 'Nova interface com icones e melhorias de acessibilidade.'; adm = "$base/FrotaADM.apk"; motorista = "$base/FrotaMotorista.apk" } | ConvertTo-Json
+$json = @{ versao = $versao; notas = 'Nova interface, acessibilidade e correcoes.'; adm = "$base/FrotaADM.apk"; motorista = "$base/FrotaMotorista.apk" } | ConvertTo-Json
 [IO.File]::WriteAllText((Join-Path $pasta 'versao.json'), $json, (New-Object Text.UTF8Encoding $false))
 $apks += 'versao.json'
 Write-Output "Versao publicada: $versao"
