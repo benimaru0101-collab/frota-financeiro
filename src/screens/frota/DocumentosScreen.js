@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
@@ -26,6 +26,7 @@ export default function DocumentosScreen({ navigation }) {
       </View>
       <Input placeholder="Buscar documento" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
+        ListEmptyComponent={<EmptyState icone="document-text-outline" titulo="Nenhum documento encontrado." dica="Cadastre CNH, licenciamento e seguro para receber avisos de vencimento." />}
         data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

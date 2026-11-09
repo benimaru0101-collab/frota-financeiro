@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle } from '../components/UI';
+import { Ionicons } from '@expo/vector-icons';
+import { Screen, Card, Title, Subtitle, SectionHeader } from '../components/UI';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { documentosVencendo } from '../utils/vencimentos';
 import DesempenhoFrota from '../components/DesempenhoFrota';
+import BannerAtualizacao from '../components/BannerAtualizacao';
 import { colors, spacing, radius } from '../theme/colors';
 
 export default function DashboardScreen({ navigation }) {
@@ -12,46 +14,55 @@ export default function DashboardScreen({ navigation }) {
   const { resumo: dashboardResumo, documentos } = useData();
   const primeiroNome = (user?.user_metadata?.full_name || user?.email || 'Juliano').split(' ')[0];
   const avisos = documentosVencendo(documentos, 30);
+  const hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
-        <View style={{ marginTop: spacing.lg }}>
-          <Subtitle>Olá,</Subtitle>
-          <Title>{primeiroNome}! 👋</Title>
+        <View style={styles.cabecalho}>
+          <View style={{ flex: 1 }}>
+            <Subtitle style={{ marginTop: 0, textTransform: 'capitalize' }}>{hoje}</Subtitle>
+            <Title>Olá, {primeiroNome}!</Title>
+          </View>
+          <View style={styles.avatar} accessible accessibilityLabel={`Usuário ${primeiroNome}`}>
+            <Text style={styles.avatarLetra}>{primeiroNome.charAt(0).toUpperCase()}</Text>
+          </View>
         </View>
+
+        <BannerAtualizacao />
 
         {isAdmin && (
           <>
-            <Card style={{ marginTop: spacing.lg, backgroundColor: colors.primary, borderWidth: 0 }}>
-              <Text style={styles.saldoLabel}>Saldo Atual</Text>
+            <Card
+              style={{ marginTop: spacing.lg, backgroundColor: colors.primary, borderWidth: 0 }}
+              accessible
+              accessibilityLabel={`Saldo atual: ${dashboardResumo.saldoAtual}. Considera só lançamentos já pagos ou recebidos.`}
+            >
+              <View style={styles.linha}>
+                <Ionicons name="wallet" size={18} color="#1A1A1A" />
+                <Text style={[styles.saldoLabel, { marginLeft: spacing.xs }]}>Saldo atual</Text>
+              </View>
               <Text style={styles.saldoValor}>{dashboardResumo.saldoAtual}</Text>
               <Text style={styles.saldoNota}>Só considera lançamentos já pagos/recebidos</Text>
             </Card>
 
             <View style={styles.row}>
-              <Card style={styles.metade}>
-                <Text style={styles.metricLabel}>Receitas do Mês</Text>
-                <Text style={[styles.metricValue, { color: colors.success }]}>{dashboardResumo.receitasMes}</Text>
-              </Card>
-              <Card style={[styles.metade, { marginLeft: spacing.md }]}>
-                <Text style={styles.metricLabel}>Despesas do Mês</Text>
-                <Text style={[styles.metricValue, { color: colors.danger }]}>{dashboardResumo.despesasMes}</Text>
-              </Card>
+              <Metrica icone="trending-up" cor={colors.success} rotulo="Receitas do mês" valor={dashboardResumo.receitasMes} />
+              <View style={{ width: spacing.md }} />
+              <Metrica icone="trending-down" cor={colors.danger} rotulo="Despesas do mês" valor={dashboardResumo.despesasMes} />
             </View>
           </>
         )}
 
-        <Card style={{ marginTop: spacing.md }}>
-          <Text style={styles.metricLabel}>Veículos Ativos</Text>
-          <Text style={styles.metricValue}>{dashboardResumo.veiculosAtivos}</Text>
-        </Card>
+        <View style={styles.row}>
+          <Metrica icone="bus" cor={colors.info} rotulo="Veículos ativos" valor={String(dashboardResumo.veiculosAtivos)} />
+        </View>
 
         {isAdmin && <DesempenhoFrota operacional={dashboardResumo.operacional} />}
 
         {isAdmin && dashboardResumo.projecaoFutura.length > 0 && (
           <View style={{ marginTop: spacing.lg }}>
-            <Text style={styles.sectionTitle}>Projeção de Caixa</Text>
+            <SectionHeader icone="calendar-outline" titulo="Projeção de caixa" />
             <Text style={styles.projecaoSubtitulo}>Lançamentos pendentes, por mês previsto</Text>
             {dashboardResumo.projecaoFutura.map((grupo) => (
               <Card key={grupo.mes} style={styles.projecaoCard}>
@@ -68,11 +79,24 @@ export default function DashboardScreen({ navigation }) {
 
         {avisos.length > 0 && (
           <View style={{ marginTop: spacing.lg }}>
-            <Text style={styles.sectionTitle}>Avisos de vencimento</Text>
+            <SectionHeader
+              icone="alert-circle-outline"
+              titulo="Avisos de vencimento"
+              acao="Ver todos"
+              aoTocarAcao={() => navigation.navigate('Frota', { screen: 'Documentos' })}
+            />
             {avisos.slice(0, 5).map((doc) => (
               <TouchableOpacity
                 key={doc.id}
                 onPress={() => navigation.navigate('Frota', { screen: 'Documentos' })}
+                accessibilityRole="button"
+                accessibilityLabel={`${doc.tipo} do veículo ${doc.placa}, ${
+                  doc.diasRestantes < 0
+                    ? `vencido há ${Math.abs(doc.diasRestantes)} dias`
+                    : doc.diasRestantes === 0
+                    ? 'vence hoje'
+                    : `vence em ${doc.diasRestantes} dias`
+                }`}
               >
                 <Card style={styles.avisoCard}>
                   <View style={{ flex: 1 }}>
@@ -93,14 +117,14 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         <View style={{ marginTop: spacing.lg }}>
-          <Text style={styles.sectionTitle}>Acesso rápido</Text>
+          <SectionHeader icone="flash-outline" titulo="Acesso rápido" />
           <View style={styles.quickRow}>
-            {isAdmin && <QuickAction label="Financeiro" icon="💰" onPress={() => navigation.navigate('Financeiro')} />}
-            <QuickAction label="Frota" icon="🚚" onPress={() => navigation.navigate('Frota')} />
+            {isAdmin && <QuickAction label="Financeiro" icon="wallet-outline" onPress={() => navigation.navigate('Financeiro')} />}
+            <QuickAction label="Frota" icon="bus-outline" onPress={() => navigation.navigate('Frota')} />
             {isAdmin && (
               <QuickAction
                 label="Relatórios"
-                icon="📊"
+                icon="bar-chart-outline"
                 onPress={() => navigation.navigate('Financeiro', { screen: 'Relatorios' })}
               />
             )}
@@ -111,16 +135,40 @@ export default function DashboardScreen({ navigation }) {
   );
 }
 
+function Metrica({ icone, cor, rotulo, valor }) {
+  return (
+    <Card style={styles.metade} accessible accessibilityLabel={`${rotulo}: ${valor}`}>
+      <View style={[styles.metricaIcone, { backgroundColor: cor + '22' }]}>
+        <Ionicons name={icone} size={18} color={cor} />
+      </View>
+      <Text style={styles.metricLabel}>{rotulo}</Text>
+      <Text style={[styles.metricValue, { color: cor === colors.info ? colors.text : cor }]} adjustsFontSizeToFit numberOfLines={1}>
+        {valor}
+      </Text>
+    </Card>
+  );
+}
+
 function QuickAction({ label, icon, onPress }) {
   return (
-    <TouchableOpacity style={styles.quickAction} onPress={onPress}>
-      <Text style={{ fontSize: 22 }}>{icon}</Text>
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} accessibilityRole="button" accessibilityLabel={`Abrir ${label}`}>
+      <Ionicons name={icon} size={24} color={colors.primary} />
       <Text style={styles.quickActionLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
+  cabecalho: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.lg },
+  avatar: {
+    width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center', marginLeft: spacing.md,
+  },
+  avatarLetra: { color: '#1A1A1A', fontSize: 20, fontWeight: '800' },
+  linha: { flexDirection: 'row', alignItems: 'center' },
+  metricaIcone: {
+    width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm,
+  },
   saldoLabel: { color: '#1A1A1A', fontSize: 13, fontWeight: '600' },
   saldoValor: { color: '#1A1A1A', fontSize: 28, fontWeight: '800', marginTop: spacing.xs },
   saldoNota: { color: '#1A1A1A', opacity: 0.65, fontSize: 11, marginTop: spacing.xs },
@@ -142,7 +190,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing.sm },
   quickRow: { flexDirection: 'row', justifyContent: 'space-between' },
   quickAction: {
-    flex: 1, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md,
+    flex: 1, alignItems: 'center', minHeight: 72, justifyContent: 'center', backgroundColor: colors.surface, borderRadius: radius.md,
     borderWidth: 1, borderColor: colors.border, paddingVertical: spacing.md, marginRight: spacing.sm,
   },
   quickActionLabel: { color: colors.text, fontSize: 12, marginTop: spacing.xs },

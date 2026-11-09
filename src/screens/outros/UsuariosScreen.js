@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ActivityIndicator, RefreshControl, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, ChipSelect } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, ChipSelect, EmptyState } from '../../components/UI';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, spacing, radius } from '../../theme/colors';
@@ -118,7 +118,7 @@ export default function UsuariosScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingTop: spacing.md, paddingBottom: spacing.xl }}
           refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} tintColor={colors.primary} />}
-          ListEmptyComponent={<Text style={styles.vazio}>Nenhum usuário encontrado.</Text>}
+          ListEmptyComponent={<EmptyState icone="people-circle-outline" titulo="Nenhum usuário encontrado." />}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => trocarPapel(item)} disabled={salvandoId === item.id}>
               <Card style={styles.item}>

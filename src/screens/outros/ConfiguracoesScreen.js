@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { VersaoApp } from '../../components/BannerAtualizacao';
 import { View, Text, Switch, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Screen, Card, Title, PrimaryButton } from '../../components/UI';
@@ -72,6 +73,8 @@ export default function ConfiguracoesScreen() {
         <Text style={styles.info}>Idioma: Português (BR)</Text>
       </View>
 
+      <VersaoApp />
+
       <PrimaryButton
         title="Salvar Alterações"
         onPress={handleSalvar}
@@ -86,7 +89,7 @@ function ToggleRow({ label, value, onChange }) {
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{label}</Text>
-      <Switch
+      <Switch accessibilityLabel={label}
         value={value}
         onValueChange={onChange}
         trackColor={{ false: colors.border, true: colors.primary }}

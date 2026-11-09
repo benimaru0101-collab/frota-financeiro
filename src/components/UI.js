@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Polyline } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme/colors';
 
 // `scroll`: formulários longos (ex.: com prévia do comprovante) passam a
@@ -24,12 +25,14 @@ export function Screen({ children, style, scroll = false }) {
   );
 }
 
-export function Card({ children, style }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function Card({ children, style, ...rest }) {
+  return <View style={[styles.card, style]} {...rest}>{children}</View>;
 }
 
+// Títulos são anunciados como "cabeçalho" pelo leitor de tela (TalkBack),
+// o que permite navegar pela tela pulando de seção em seção.
 export function Title({ children, style }) {
-  return <Text style={[styles.title, style]}>{children}</Text>;
+  return <Text accessibilityRole="header" style={[styles.title, style]}>{children}</Text>;
 }
 
 export function Subtitle({ children, style }) {
@@ -63,8 +66,11 @@ export function Input(props) {
   return (
     <TextInput
       placeholderTextColor={colors.textMuted}
-      style={[styles.input, props.style]}
+      // Sem rótulo explícito, o leitor de tela usa o placeholder como nome do campo.
+      accessibilityLabel={props.accessibilityLabel ?? props.placeholder}
+      maxFontSizeMultiplier={1.6}
       {...props}
+      style={[styles.input, props.style]}
       {...extras}
     />
   );
@@ -75,6 +81,9 @@ export function PrimaryButton({ title, onPress, loading, disabled, style }) {
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       style={[styles.primaryButton, (disabled || loading) && { opacity: 0.6 }, style]}
     >
       {loading ? (
@@ -88,7 +97,12 @@ export function PrimaryButton({ title, onPress, loading, disabled, style }) {
 
 export function SecondaryButton({ title, onPress, style }) {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.secondaryButton, style]}>
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      style={[styles.secondaryButton, style]}
+    >
       <Text style={styles.secondaryButtonText}>{title}</Text>
     </TouchableOpacity>
   );
@@ -96,11 +110,21 @@ export function SecondaryButton({ title, onPress, style }) {
 
 export function GoogleButton({ title = 'Entrar com Google', onPress, loading }) {
   return (
-    <TouchableOpacity onPress={onPress} disabled={loading} style={styles.googleButton}>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={loading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!loading, busy: !!loading }}
+      style={styles.googleButton}
+    >
       {loading ? (
         <ActivityIndicator color={colors.text} />
       ) : (
-        <Text style={styles.googleButtonText}>G  {title}</Text>
+        <View style={styles.linhaIcone}>
+          <Ionicons name="logo-google" size={18} color={colors.text} />
+          <Text style={[styles.googleButtonText, { marginLeft: spacing.sm }]}>{title}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -115,6 +139,9 @@ export function ChipSelect({ options, value, onChange }) {
           <TouchableOpacity
             key={opt}
             onPress={() => onChange(opt)}
+            accessibilityRole="radio"
+            accessibilityLabel={opt}
+            accessibilityState={{ selected, checked: selected }}
             style={[styles.chipOption, selected && styles.chipOptionSelected]}
           >
             <Text style={[styles.chipOptionText, selected && styles.chipOptionTextSelected]}>{opt}</Text>
@@ -134,6 +161,9 @@ export function FilterTabs({ options, value, onChange }) {
           <TouchableOpacity
             key={opt}
             onPress={() => onChange(opt)}
+            accessibilityRole="tab"
+            accessibilityLabel={opt}
+            accessibilityState={{ selected }}
             style={[styles.filterTab, selected && styles.filterTabSelected]}
           >
             <Text style={[styles.filterTabText, selected && styles.filterTabTextSelected]}>{opt}</Text>
@@ -153,6 +183,9 @@ export function ColorSwatchSelect({ options, value, onChange }) {
           <TouchableOpacity
             key={cor}
             onPress={() => onChange(cor)}
+            accessibilityRole="radio"
+            accessibilityLabel={`Cor ${cor}`}
+            accessibilityState={{ selected, checked: selected }}
             style={[styles.swatch, { backgroundColor: cor }, selected && styles.swatchSelected]}
           />
         );
@@ -161,11 +194,51 @@ export function ColorSwatchSelect({ options, value, onChange }) {
   );
 }
 
-export function IconButton({ icon = '+', onPress, style }) {
+export function IconButton({ icon = '+', onPress, style, accessibilityLabel }) {
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.iconButton, style]}>
-      <Text style={styles.iconButtonText}>{icon}</Text>
+    <TouchableOpacity
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? (icon === '+' ? 'Adicionar' : String(icon))}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      style={[styles.iconButton, style]}
+    >
+      {icon === '+' ? (
+        <Ionicons name="add" size={24} color={colors.darkText} />
+      ) : (
+        <Text style={styles.iconButtonText}>{icon}</Text>
+      )}
     </TouchableOpacity>
+  );
+}
+
+// Lista vazia: ícone + frase + dica, em vez de um texto solto.
+export function EmptyState({ icone = 'file-tray-outline', titulo, dica }) {
+  return (
+    <View style={styles.vazio} accessible accessibilityLabel={[titulo, dica].filter(Boolean).join('. ')}>
+      <View style={styles.vazioIcone}>
+        <Ionicons name={icone} size={32} color={colors.primary} />
+      </View>
+      <Text style={styles.vazioTitulo}>{titulo}</Text>
+      {dica ? <Text style={styles.vazioDica}>{dica}</Text> : null}
+    </View>
+  );
+}
+
+// Título de seção com ícone, usado nas telas de painel.
+export function SectionHeader({ icone, titulo, acao, aoTocarAcao }) {
+  return (
+    <View style={styles.secao}>
+      <View style={styles.linhaIcone}>
+        {icone ? <Ionicons name={icone} size={18} color={colors.primary} style={{ marginRight: spacing.sm }} /> : null}
+        <Text accessibilityRole="header" style={styles.secaoTitulo}>{titulo}</Text>
+      </View>
+      {acao ? (
+        <TouchableOpacity onPress={aoTocarAcao} accessibilityRole="button" hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={styles.secaoAcao}>{acao}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
   );
 }
 
@@ -273,6 +346,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   input: {
+    minHeight: 48,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
     borderWidth: 1,
@@ -283,6 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   primaryButton: {
+    minHeight: 48,
     backgroundColor: colors.primary,
     borderRadius: radius.sm,
     paddingVertical: 14,
@@ -295,6 +370,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   secondaryButton: {
+    minHeight: 48,
     borderRadius: radius.sm,
     paddingVertical: 14,
     alignItems: 'center',
@@ -307,6 +383,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   googleButton: {
+    minHeight: 48,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
     paddingVertical: 14,
@@ -406,9 +483,9 @@ const styles = StyleSheet.create({
     borderColor: colors.text,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -419,4 +496,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 20,
   },
+  linhaIcone: { flexDirection: 'row', alignItems: 'center' },
+  vazio: { alignItems: 'center', paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
+  vazioIcone: {
+    width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt, marginBottom: spacing.md,
+  },
+  vazioTitulo: { color: colors.text, fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  vazioDica: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: spacing.xs },
+  secao: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm,
+  },
+  secaoTitulo: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  secaoAcao: { color: colors.primary, fontSize: 13, fontWeight: '600' },
 });

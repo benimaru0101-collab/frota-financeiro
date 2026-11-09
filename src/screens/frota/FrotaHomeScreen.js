@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -26,6 +26,8 @@ export default function FrotaHomeScreen({ navigation }) {
       </View>
 
       <FlatList
+
+        ListEmptyComponent={<EmptyState icone="bus-outline" titulo="Nenhum veículo encontrado." dica="Cadastre o primeiro veículo da frota." />}
         data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

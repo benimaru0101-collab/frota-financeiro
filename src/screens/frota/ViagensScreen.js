@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 import StatusViagem from '../motorista/StatusViagem';
@@ -31,6 +31,7 @@ export default function ViagensScreen({ navigation }) {
       </View>
       <Input placeholder="Buscar viagem" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
+        ListEmptyComponent={<EmptyState icone="map-outline" titulo="Nenhuma viagem encontrada." dica="Crie uma viagem e ela aparece no app do motorista." />}
         data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

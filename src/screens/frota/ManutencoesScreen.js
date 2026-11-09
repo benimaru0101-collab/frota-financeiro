@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing } from '../../theme/colors';
 
@@ -26,6 +26,7 @@ export default function ManutencoesScreen({ navigation }) {
       </View>
       <Input placeholder="Buscar manutenção" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
+        ListEmptyComponent={<EmptyState icone="construct-outline" titulo="Nenhuma manutenção encontrada." dica="Registre as manutenções para acompanhar os custos." />}
         data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

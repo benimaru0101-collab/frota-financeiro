@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -38,6 +38,7 @@ export default function DespesasScreen({ navigation }) {
       </View>
       <Input placeholder="Buscar despesa" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
+        ListEmptyComponent={<EmptyState icone="arrow-down-circle-outline" titulo="Nenhuma despesa encontrada." dica="Use o botão de nova despesa para lançar a primeira." />}
         data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

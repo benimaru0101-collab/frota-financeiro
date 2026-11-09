@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -25,7 +26,11 @@ function ViagensStackNavigator() {
   );
 }
 
-const ICONS = { Viagens: '🚚', Abastecer: '⛽', Perfil: '👤' };
+const ICONS = {
+  Viagens: ['map', 'map-outline'],
+  Abastecer: ['speedometer', 'speedometer-outline'],
+  Perfil: ['person-circle', 'person-circle-outline'],
+};
 
 export default function MotoristaNavigator() {
   return (
@@ -35,8 +40,11 @@ export default function MotoristaNavigator() {
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
-          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>{ICONS[route.name]}</Text>,
+          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 64, paddingBottom: 8, paddingTop: 6 },
+          tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={ICONS[route.name][focused ? 0 : 1]} size={size} color={color} />
+          ),
         })}
       >
         <Tab.Screen name="Viagens" component={ViagensStackNavigator} options={{ title: 'Minhas viagens' }} />

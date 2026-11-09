@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Input, FilterTabs, IconButton } from '../../components/UI';
+import { Screen, Card, Title, Input, FilterTabs, IconButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -49,7 +49,7 @@ export default function CategoriasScreen({ navigation }) {
         data={filtradas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
-        ListEmptyComponent={<Text style={styles.vazio}>Nenhuma categoria encontrada.</Text>}
+        ListEmptyComponent={<EmptyState icone="pricetags-outline" titulo="Nenhuma categoria encontrada." dica="Toque em + para criar uma categoria." />}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('EditarCategoria', { categoria: item })}

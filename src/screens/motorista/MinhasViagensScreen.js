@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BannerAtualizacao from '../../components/BannerAtualizacao';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, StyleSheet } from 'react-native';
 import { Screen, Card, Title, Subtitle, FilterTabs } from '../../components/UI';
 import { useMotorista } from '../../contexts/MotoristaContext';
@@ -46,6 +47,8 @@ export default function MinhasViagensScreen({ navigation }) {
         <Subtitle>Olá,</Subtitle>
         <Title>{cadastro.nome.split(' ')[0]} 🚚</Title>
       </View>
+
+      <BannerAtualizacao />
 
       <View style={styles.resumo}>
         <Resumo rotulo="Hoje" valor={deHoje} />
