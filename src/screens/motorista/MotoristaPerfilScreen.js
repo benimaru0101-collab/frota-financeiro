@@ -1,4 +1,5 @@
 import React from 'react';
+import { VersaoApp } from '../../components/BannerAtualizacao';
 import { View, Text, StyleSheet } from 'react-native';
 import { Screen, Card, Title, SecondaryButton } from '../../components/UI';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,6 +24,7 @@ export default function MotoristaPerfilScreen() {
         {cadastro?.cnh ? <Text style={styles.info}>{cadastro.cnh}</Text> : null}
         {!cadastro && <Text style={[styles.info, { color: colors.danger }]}>Conta ainda não vinculada a um cadastro de motorista.</Text>}
       </Card>
+      <VersaoApp />
       <SecondaryButton title="Sair da conta" onPress={signOut} style={{ marginTop: spacing.lg }} />
     </Screen>
   );

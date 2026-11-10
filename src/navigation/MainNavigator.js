@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -122,7 +123,13 @@ function MaisStackNavigator() {
   );
 }
 
-const ICONS = { Inicio: '🏠', Financeiro: '💰', Frota: '🚚', Mais: '⚙️' };
+// Ícones vetoriais (nítidos em qualquer tela); versão cheia na aba ativa.
+const ICONS = {
+  Inicio: ['home', 'home-outline'],
+  Financeiro: ['wallet', 'wallet-outline'],
+  Frota: ['bus', 'bus-outline'],
+  Mais: ['menu', 'menu-outline'],
+};
 
 export default function MainNavigator() {
   // Controle de acesso (RBAC): a aba Financeiro só aparece pra quem
@@ -138,8 +145,11 @@ export default function MainNavigator() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarIcon: () => <Text style={{ fontSize: 18 }}>{ICONS[route.name]}</Text>,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 64, paddingBottom: 8, paddingTop: 6 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarIcon: ({ focused, color, size }) => (
+          <Ionicons name={ICONS[route.name][focused ? 0 : 1]} size={size} color={color} />
+        ),
       })}
     >
       <Tab.Screen name="Inicio" component={DashboardScreen} options={{ title: 'Início' }} />

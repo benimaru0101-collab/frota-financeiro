@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { Screen, Card, Title, Subtitle, Input, PrimaryButton } from '../../components/UI';
+import { Screen, Card, Title, Subtitle, Input, PrimaryButton, EmptyState } from '../../components/UI';
 import { useData } from '../../contexts/DataContext';
 import { colors, spacing, radius } from '../../theme/colors';
 
@@ -16,6 +16,7 @@ export default function MotoristasScreen({ navigation }) {
       </View>
       <Input placeholder="Buscar motorista" style={{ marginTop: spacing.md }} value={busca} onChangeText={setBusca} />
       <FlatList
+        ListEmptyComponent={<EmptyState icone="people-outline" titulo="Nenhum motorista encontrado." dica="Cadastre os motoristas para vincular às viagens." />}
         data={filtrados}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.md }}

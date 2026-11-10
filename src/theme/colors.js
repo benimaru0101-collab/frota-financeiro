@@ -10,9 +10,9 @@ export const colors = {
   primaryDark: '#E5A800',
   text: '#FFFFFF',
   darkText: '#1A1A1A',
-  textMuted: '#A0A0A0',
+  textMuted: '#B0B0B0', // cinza com contraste AA sobre os cartões
   success: '#4CAF50',
-  danger: '#F44336',
+  danger: '#FF6B6B', // vermelho mais claro: contraste >= 4,5:1 sobre o fundo escuro (WCAG AA)
   info: '#2196F3',
 };
 

@@ -31,11 +31,19 @@ try {
   Write-Output "Release $tag criada."
 }
 
+# versao.json: o botao "Atualizar" do app le este arquivo.
+$versao = (Get-Content (Join-Path $PSScriptRoot 'app.json') -Raw | ConvertFrom-Json).expo.version
+$base = "https://github.com/$repo/releases/download/$tag"
+$json = @{ versao = $versao; notas = 'Nova interface, acessibilidade e correcoes.'; adm = "$base/FrotaADM.apk"; motorista = "$base/FrotaMotorista.apk" } | ConvertTo-Json
+[IO.File]::WriteAllText((Join-Path $pasta 'versao.json'), $json, (New-Object Text.UTF8Encoding $false))
+$apks += 'versao.json'
+Write-Output "Versao publicada: $versao"
+
 foreach ($a in $apks) {
   $velho = $rel.assets | Where-Object { $_.name -eq $a }
   if ($velho) { Invoke-RestMethod -Method Delete -Headers $h -Uri "https://api.github.com/repos/$repo/releases/assets/$($velho.id)" | Out-Null }
   Write-Output "Enviando $a ..."
-  $up = Invoke-RestMethod -Method Post -Headers $h -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$a" -InFile (Join-Path $pasta $a) -ContentType 'application/vnd.android.package-archive' -TimeoutSec 900
+  $up = Invoke-RestMethod -Method Post -Headers $h -Uri "https://uploads.github.com/repos/$repo/releases/$($rel.id)/assets?name=$a" -InFile (Join-Path $pasta $a) -ContentType $(if ($a -like '*.json') { 'application/json' } else { 'application/vnd.android.package-archive' }) -TimeoutSec 900
   Write-Output ("OK: " + $up.browser_download_url)
 }
 Write-Output ("LINK_RELEASE: " + $rel.html_url)
